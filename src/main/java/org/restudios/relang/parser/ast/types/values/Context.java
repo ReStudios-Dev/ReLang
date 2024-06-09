@@ -155,7 +155,7 @@ public class Context {
             classes.set(where, what);
         }
         if(returning != null) return returning;
-        if(parent == null)return null;
+        if(parent == null) return null;
         return parent.getClass(name);
     }
 
@@ -183,9 +183,9 @@ public class Context {
 
     public ArrayList<FunctionMethod> getMethods(String name) {
         ArrayList<FunctionMethod> result = new ArrayList<>();
-        for (FunctionMethod m : methods) {
-            if(m.name.equals(name)){
-                result.add(m);
+        for (FunctionMethod method : methods) {
+            if(method.name.equals(name)){
+                result.add(method);
             }
         }
         if(parent != null){
@@ -196,17 +196,17 @@ public class Context {
         return result;
     }
     public FunctionMethod getMethod(String name, Type... arguments) {
-        gen:for (FunctionMethod m : methods) {
-            if(m.name.equals(name)){
-                if(m.getArguments().size() != arguments.length)continue;
-                for (int i = 0; i < m.getArgumentTypes().size(); i++) {
-                    Type methodArgument = m.getArgumentTypes().get(i);
+        gen:for (FunctionMethod methods : methods) {
+            if(methods.name.equals(name)){
+                if(methods.getArguments().size() != arguments.length) continue;
+                for (int i = 0; i < methods.getArgumentTypes().size(); i++) {
+                    Type methodArgument = methods.getArgumentTypes().get(i);
                     Type findArgument = arguments[i];
                     if(!findArgument.canBe(methodArgument)){
                         continue gen;
                     }
                 }
-                return m;
+                return methods;
             }
         }
         if(parent != null){
@@ -223,10 +223,10 @@ public class Context {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Context that = (Context) o;
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Context that = (Context) obj;
         return Objects.equals(hashCode(), that.hashCode());
     }
 
