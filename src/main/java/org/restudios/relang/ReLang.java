@@ -12,7 +12,6 @@ import org.restudios.relang.parser.modules.threading.AThreadManager;
 import org.restudios.relang.parser.tokens.Token;
 import org.restudios.relang.parser.utils.NativeClass;
 import org.restudios.relang.parser.utils.RLOutput;
-import org.restudios.relang.parser.utils.RLStackTraceElement;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -196,10 +195,6 @@ public class ReLang {
         } catch (RLException rle){
             exitCode = 1;
             if(debug){
-                System.out.println("-------------");
-                for (RLStackTraceElement element : rle.getTrace().getElements()) {
-                    System.out.println(element);
-                }
                 throw new RuntimeException(rle);
             }else{
                 rle.instantiate(context).tryToPrintException();
