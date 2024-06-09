@@ -5,7 +5,7 @@ public void second(){
     third();
 }
 public void third(){
-    throw new Exception("e");
+    throw new NullPointerException("e");
 }
 
 public class Test {
