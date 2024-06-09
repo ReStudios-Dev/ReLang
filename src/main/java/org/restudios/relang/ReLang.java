@@ -22,17 +22,34 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings({"unused", "UnusedReturnValue"})
 public class ReLang {
+    /**
+     * Context
+     */
     private final Context context;
-    private final ReLangClassLoader classLoader;
-    private boolean debug = false;
 
-    private List<BlockStatement> preparedCode = null;
+    /**
+     * Class loader
+     */
+    private final ReLangClassLoader classLoader;
+
+    /**
+     * Debug mode. In debugging mode, all exceptions
+     * will be processed by the programming language
+     */
+    private boolean debug;
+
+    private List<BlockStatement> preparedCode;
 
     public ReLang() {
         context = new GlobalContext();
         classLoader = new ReLangClassLoader();
+        debug = false;
+        preparedCode = null;
     }
 
+    /**
+     * Get current thread manager
+     */
     public AThreadManager getThreadManager() {
         return context.getThreadManager();
     }
@@ -43,7 +60,7 @@ public class ReLang {
      * but Thread.getCurrentThread() returns a thread named main,
      * which cannot be interacted with. If you need to use
      * threads and your environment supports them, you can extend
-     * AClassManager by writing your own thread system. Don't be
+     * AThreadManager by writing your own thread system. Don't be
      * afraid, it's extremely easy.
      * @param threadManager Thread manager
      */
@@ -62,6 +79,10 @@ public class ReLang {
         return context;
     }
 
+    /**
+     * In debugging mode, all exceptions will be processed
+     * by the programming language
+     */
     public boolean isDebug() {
         return debug;
     }
@@ -115,26 +136,12 @@ public class ReLang {
         setOutput(new RLOutput(err, out));
     }
 
-
     /**
      * Output streams:
      * Normal (out - information, exceptions, errors, etc.),
      */
     public void setOutput(PrintStream out){
         setOutput(new RLOutput(out));
-    }
-    private BlockStatement parseCode(ClassPath path){
-        LexerV2 lexer = new LexerV2(path.getSource(), path.getCode());
-        ArrayList<Token> lexemes = lexer.lex();
-        ASTGenerator ast = new ASTGenerator(lexemes, path.getCode(), path.getSource());
-        return ast.parseProgram();
-    }
-    private BlockStatement parseCode(ClassPath path, PsiListener listener){
-        LexerV2 lexer = new LexerV2(path.getSource(), path.getCode());
-        ArrayList<Token> lexemes = lexer.lex();
-        ASTGenerator ast = new ASTGenerator(lexemes, path.getCode(), path.getSource());
-        ast.setPSIListener(listener);
-        return ast.parseProgram();
     }
 
     /**
@@ -145,16 +152,6 @@ public class ReLang {
             ArrayList<ClassPath> classPaths = classLoader.getClassPaths();
             this.preparedCode = prepare(classPaths);
         }
-    }
-    private List<BlockStatement> prepare(List<ClassPath> classPaths) {
-        List<BlockStatement> statementList = classPaths.stream().map(this::parseCode).collect(Collectors.toList());
-        statementList.forEach(blockStatement -> blockStatement.prepare(context));
-        return statementList;
-    }
-    private List<BlockStatement> prepare(List<ClassPath> classPaths, PsiListener listener) {
-        List<BlockStatement> statementList = classPaths.stream().map(classPath -> parseCode(classPath, listener)).collect(Collectors.toList());
-        statementList.forEach(blockStatement -> blockStatement.prepare(context));
-        return statementList;
     }
 
     /**
@@ -186,6 +183,8 @@ public class ReLang {
     public int execute(String code){
         return execute("native", code);
     }
+
+
     private int run(List<BlockStatement> statements){
         int exitCode = 0;
         try {
@@ -207,5 +206,28 @@ public class ReLang {
         }
         context.getOutput().exitCode = exitCode;
         return exitCode;
+    }
+    private BlockStatement parseCode(ClassPath path){
+        LexerV2 lexer = new LexerV2(path.getSource(), path.getCode());
+        ArrayList<Token> lexemes = lexer.lex();
+        ASTGenerator ast = new ASTGenerator(lexemes, path.getCode(), path.getSource());
+        return ast.parseProgram();
+    }
+    private BlockStatement parseCode(ClassPath path, PsiListener listener){
+        LexerV2 lexer = new LexerV2(path.getSource(), path.getCode());
+        ArrayList<Token> lexemes = lexer.lex();
+        ASTGenerator ast = new ASTGenerator(lexemes, path.getCode(), path.getSource());
+        ast.setPSIListener(listener);
+        return ast.parseProgram();
+    }
+    private List<BlockStatement> prepare(List<ClassPath> classPaths) {
+        List<BlockStatement> statementList = classPaths.stream().map(this::parseCode).collect(Collectors.toList());
+        statementList.forEach(blockStatement -> blockStatement.prepare(context));
+        return statementList;
+    }
+    private List<BlockStatement> prepare(List<ClassPath> classPaths, PsiListener listener) {
+        List<BlockStatement> statementList = classPaths.stream().map(classPath -> parseCode(classPath, listener)).collect(Collectors.toList());
+        statementList.forEach(blockStatement -> blockStatement.prepare(context));
+        return statementList;
     }
 }
