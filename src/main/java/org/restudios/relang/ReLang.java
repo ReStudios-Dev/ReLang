@@ -194,6 +194,7 @@ public class ReLang {
         }catch (ExitExp e){
             exitCode = e.code;
         } catch (RLException rle){
+            exitCode = 1;
             if(debug){
                 System.out.println("-------------");
                 for (RLStackTraceElement element : rle.getTrace().getElements()) {
