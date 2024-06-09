@@ -1,0 +1,121 @@
+package org.restudios.relang.parser.tokens;
+
+public enum TokenType {
+    EMPTY,
+    COMMENT,
+    BLOCK_COMMENT_START,
+    BLOCK_COMMENT_END,
+
+    STRING_LITERAL,
+    CHAR_LITERAL,
+    FLOAT_LITERAL,
+    INTEGER_LITERAL,
+    BOOL_LITERAL,
+    TBOOL_LITERAL,
+
+    CHAR,
+    INTEGER,
+    FLOAT,
+    BOOL,
+    TBOOL,
+
+    VOID,
+    NULL,
+    ERR,
+    OUT,
+    EXIT,
+    THROW,
+    TRY,
+    CATCH,
+    IF,
+    ELSE,
+    FOREACH,
+    FOR,
+    FORI,
+    DO,
+    WHILE,
+    SUPER,
+    IMPLICIT,
+    EXPLICIT,
+    OPERATOR,
+    PUBLIC,
+    PRIVATE,
+    STATIC,
+    READONLY,
+    FINAL,
+    NEW,
+    RETURN,
+
+    ABSTRACT,
+    NATIVE,
+    OVERRIDE,
+    INTERFACE,
+    CLASS,
+    IMPLEMENTS,
+    EXTENDS,
+    ENUM,
+
+    EQUALS,
+    NOT_EQUAL,
+    LESS_OR_EQUAL,
+    GREATER_OR_EQUAL,
+    AND,
+    OR,
+    INCREMENT,
+    DECREMENT,
+    EQUAL,
+    DOT,
+    COMMA,
+    COLON,
+    SEMICOLON,
+
+    PLUS_EQUAL,
+    MINUS_EQUAL,
+    STAR_EQUAL,
+    DIVIDE_EQUAL,
+
+    BIT_OR_EQUAL,
+    BIT_AND_EQUAL,
+    BIT_XOR_EQUAL,
+    BIT_LEFT_SIGNED_SHIFT_EQUAL,
+    BIT_RIGHT_SIGNED_SHIFT_EQUAL,
+    BIT_RIGHT_UNSIGNED_SHIFT_EQUAL,
+
+    POW_EQUAL,
+    NULLABLE_EQUAL,
+    MODULO_EQUAL,
+
+    LAMBDA,
+
+    PLUS,
+    MINUS,
+    STAR,
+    DIVIDE,
+
+    BIT_OR,
+    BIT_AND,
+    BIT_NOT,
+    BIT_XOR,
+
+    POW,
+    QUESTION_MARK,
+    MODULO,
+    NOT,
+    HEX,
+    OPEN_BRACE,
+    CLOSE_BRACE,
+    OPEN_PARENTHESES,
+    CLOSE_PARENTHESES,
+    OPEN_SQUARE_BRACKET,
+    CLOSE_SQUARE_BRACKET,
+    OPEN_ANGLE_BRACKET,
+    CLOSE_ANGLE_BRACKET,
+    IDENTIFIER
+
+    ;
+ 
+
+    TokenType() { 
+    }
+ 
+}
