@@ -33,19 +33,19 @@ public class SLLMethod extends FunctionMethod {
     }
     @SuppressWarnings("unused")
     public SLLMethod(String name, boolean staticMethod, LinkedHashMap<String, Type> arguments, SLLMethodCall handler, ClassInstance clazz) {
-        this(name, staticMethod, arguments, handler, clazz.getRLClass().originalMethod(name, arguments, clazz.getContext()));
+        this(name, staticMethod, arguments, handler, clazz.getRLClass().findRawMethod(name, arguments, clazz.getContext()));
     }
     public SLLMethod(String name, boolean staticMethod, LinkedHashMap<String, Type> arguments, SLLMethodCall handler, RLClass clazz, Context context) {
-        this(name, staticMethod, arguments, handler, clazz.originalMethod(name, arguments, context));
+        this(name, staticMethod, arguments, handler, clazz.findRawMethod(name, arguments, context));
         this.context = context;
     }
     @SuppressWarnings("unused")
     public SLLMethod(String name, boolean staticMethod, Map.Entry<String, Type> argument, SLLMethodCall handler, RLClass clazz, Context context) {
-        this(name, staticMethod, argumentToMap(argument), handler, clazz.originalMethod(name, argumentToMap(argument), context));
+        this(name, staticMethod, argumentToMap(argument), handler, clazz.findRawMethod(name, argumentToMap(argument), context));
         this.context = context;
     }
     public SLLMethod(String name, boolean staticMethod, SLLMethodCall handler, RLClass clazz, Context context) {
-        this(name, staticMethod, new LinkedHashMap<>(), handler, clazz.originalMethod(name, new LinkedHashMap<>(), context));
+        this(name, staticMethod, new LinkedHashMap<>(), handler, clazz.findRawMethod(name, new LinkedHashMap<>(), context));
         this.context = context;
     }
     private static LinkedHashMap<String, Type> argumentToMap(Map.Entry<String, Type> i){

@@ -1,7 +1,7 @@
 /**
 * Is parent of every class
 */
-public class obj {
+public native class obj {
 
     public bool equals(obj some){
         return this.hash() == some.hash();

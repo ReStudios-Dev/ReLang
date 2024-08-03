@@ -50,6 +50,7 @@ public enum TokenType {
     NATIVE,
     OVERRIDE,
     INTERFACE,
+    ANNOTATION,
     CLASS,
     IMPLEMENTS,
     EXTENDS,

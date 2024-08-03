@@ -22,7 +22,7 @@ public enum Primitives {
 
     public Value getReflectionClass(Context context) {
         RLEnumClass e = ((RLEnumClass) context.getClass(DynamicSLLClass.REFL_PRIMITIVE));
-        e.initStatic();
+        e.initializeStaticContext();
         for (EnumItemValue value : e.values) {
             if (value.name().equalsIgnoreCase(this.name())) {
                 return e.instantiateEnumeration(context, value);

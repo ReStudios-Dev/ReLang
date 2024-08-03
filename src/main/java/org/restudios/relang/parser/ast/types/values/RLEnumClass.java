@@ -24,8 +24,8 @@ public class RLEnumClass extends RLClass {
     }
 
     @Override
-    public void initStatic() {
-        super.initStatic();
+    public void initializeStaticContext() {
+        super.initializeStaticContext();
         if(!initialized){
             initialized = true;
             for (EnumItemValue value : values) {
@@ -40,7 +40,7 @@ public class RLEnumClass extends RLClass {
     }
 
     public EnumClassInstance instantiateEnumeration(Context context, EnumItemValue value, Value... values) {
-        initStatic();
+        initializeStaticContext();
         EnumClassInstance instance = new EnumClassInstance(this, context, value);
         createdChild(instance);
         callConstructor(context, instance.getContext(), values);

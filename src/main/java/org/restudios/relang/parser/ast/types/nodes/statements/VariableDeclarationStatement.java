@@ -1,5 +1,6 @@
 package org.restudios.relang.parser.ast.types.nodes.statements;
 
+import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.Visibility;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
@@ -9,6 +10,8 @@ import org.restudios.relang.parser.ast.types.values.Variable;
 import org.restudios.relang.parser.ast.types.values.Context;
 import org.restudios.relang.parser.ast.types.values.values.NullValue;
 import org.restudios.relang.parser.ast.types.values.values.Value;
+import org.restudios.relang.parser.ast.types.values.values.sll.classes.RLRunnable;
+import org.restudios.relang.parser.ast.types.values.values.sll.dynamic.DynamicSLLClass;
 import org.restudios.relang.parser.exceptions.RLException;
 import org.restudios.relang.parser.tokens.Token;
 
@@ -32,9 +35,19 @@ public class VariableDeclarationStatement extends Statement {
         Value val = null;
         type.init(context);
         if(value != null){
+            Context subContext = new Context(context);
             type.initClassOrType(context);
-            Value v = value.eval(context).initContext(context);
-            val = CastExpression.cast(type, v.finalExpression(), context);
+            Value v = value.eval(subContext).initContext(subContext).finalExpression();
+            if(v instanceof RLRunnable) {
+                if (type.like(Type.clazz(DynamicSLLClass.RUNNABLE, context))) {
+                    if(type.subTypes.isEmpty()){
+                        ((RLRunnable) v).setReturn(Primitives.VOID.type());
+                    }else{
+                        ((RLRunnable) v).setReturn(type.subTypes.get(0));
+                    }
+                }
+            }
+            val = CastExpression.cast(type, v, context);
         }
         if(value == null){
             val = new NullValue();

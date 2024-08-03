@@ -52,12 +52,12 @@ public class CastExpression extends Expression {
                 }
             }
 
-            CastOperatorOverloadFunctionMethod overload = ci.getRLClass().getExplicitOverloading(castToType);
+            CastOperatorOverloadFunctionMethod overload = ci.getRLClass().findExplicitOperator(castToType);
             if(overload != null) return overload.runMethod(ci.getRLClass().getStaticContext(), context, valueToCast);
         }
         if(castToType.isCustomType()){
             RLClass clazz = castToType.clazz;
-            CastOperatorOverloadFunctionMethod overload = clazz.getImplicitOverloading(valueToCast.type());
+            CastOperatorOverloadFunctionMethod overload = clazz.findImplicitOperator(valueToCast.type());
             if(overload != null) return overload.runMethod(clazz.getStaticContext(), context, valueToCast);
         }
 

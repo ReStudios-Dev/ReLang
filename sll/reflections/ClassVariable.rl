@@ -1,4 +1,4 @@
-public abstract class ClassVariable {
+public native abstract class ClassVariable {
     public readonly ObjectVisibility visibility;
 
     public Type type;

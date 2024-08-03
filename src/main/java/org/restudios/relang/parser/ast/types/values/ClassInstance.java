@@ -29,7 +29,7 @@ public class ClassInstance implements Instance {
         this.subTypes.addAll(this.clazz.getSubTypes().stream().map(CustomTypeValue::clone).collect(Collectors.toList()));
 
         applyTypes(types);
-        clazz.initStatic();
+        clazz.initializeStaticContext();
         clazz.createdChild(this);
     }
     public ClassInstance(RLClass clazz, List<Type> types, Context parent) {
@@ -39,8 +39,8 @@ public class ClassInstance implements Instance {
         this.subTypes.addAll(this.clazz.getSubTypes().stream().map(CustomTypeValue::clone).collect(Collectors.toList()));
 
         applyTypes(types);
-        clazz.initStatic();
-        methods.addAll(clazz.getParentMethods(false, true, false));
+        clazz.initializeStaticContext();
+        methods.addAll(clazz.getAllMethods(false, true, false));
         for (FunctionMethod method : clazz.getAllDeclaredMethods()) {
             if(method.visibility.contains(Visibility.STATIC))continue;
             methods.add(method);
@@ -139,7 +139,7 @@ public class ClassInstance implements Instance {
     }
 
     public FunctionMethod findMethodFromNameAndArguments(Context context, String name, Value... values) {
-        return findMethodFromNameAndArguments(name, values, getRLClass().getParentMethods(true, true, false), context, this);
+        return findMethodFromNameAndArguments(name, values, getRLClass().getAllMethods(true, true, false), context, this);
     }
     public static FunctionMethod findMethodFromNameAndArguments(String name, Value[] values, ArrayList<FunctionMethod> methods, Context context, ClassInstance instance) {
         ArrayList<Type> types = Arrays.stream(values).map(value -> value.finalExpression().type()).collect(Collectors.toCollection(ArrayList::new));
@@ -164,7 +164,7 @@ public class ClassInstance implements Instance {
 
     @Override
     public String stringValue() {
-        CastOperatorOverloadFunctionMethod d = clazz.getExplicitOverloading(Type.clazz(context.getClass(DynamicSLLClass.STRING)));
+        CastOperatorOverloadFunctionMethod d = clazz.findExplicitOperator(Type.clazz(context.getClass(DynamicSLLClass.STRING)));
         if(clazz.getName().equals(DynamicSLLClass.STRING)){
             return toString();
         }

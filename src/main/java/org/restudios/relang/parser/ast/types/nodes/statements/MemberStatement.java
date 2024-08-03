@@ -45,7 +45,7 @@ public class MemberStatement extends Statement  {
             }
 
             RLClass clazz = (RLClass) l;
-            clazz.initStatic();
+            clazz.initializeStaticContext();
             return mcs.fromStatic(clazz, context);
         }
         IdentifierExpression variable = (IdentifierExpression) right;
@@ -56,7 +56,7 @@ public class MemberStatement extends Statement  {
             throw new RLException("Cannot operate", Type.internal(context), context);
         }
         RLClass clazz = (RLClass) l;
-        clazz.initStatic();
+        clazz.initializeStaticContext();
         if (variable.value.equals("class")) {
             return clazz.getReflectionClass(context);
         }

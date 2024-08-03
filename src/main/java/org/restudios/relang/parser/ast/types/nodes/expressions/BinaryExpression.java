@@ -34,13 +34,13 @@ public class BinaryExpression extends Statement {
             ClassInstance li = (ClassInstance) l;
             ClassInstance ri = (ClassInstance) r;
             if(li.getRLClass().equals(ri.getRLClass())){
-                FunctionMethod fm = li.getRLClass().getBinaryOperation(operator, li.getRLClass(), li.getRLClass());
+                FunctionMethod fm = li.getRLClass().findBinaryOperator(operator, li.getRLClass(), li.getRLClass());
                 if(fm != null){
                     return fm.runMethod(li.getRLClass().getStaticContext(), context, li, ri);
                 }
             }else{
-                FunctionMethod fm = li.getRLClass().getBinaryOperation(operator, li.getRLClass(), ri.getRLClass());
-                FunctionMethod fm2 = ri.getRLClass().getBinaryOperation(operator, li.getRLClass(), ri.getRLClass());
+                FunctionMethod fm = li.getRLClass().findBinaryOperator(operator, li.getRLClass(), ri.getRLClass());
+                FunctionMethod fm2 = ri.getRLClass().findBinaryOperator(operator, li.getRLClass(), ri.getRLClass());
                 if(fm != null){
                     Type lt = fm.getArguments().get(0).type;
                     Type rt = fm.getArguments().get(1).type;
@@ -54,7 +54,7 @@ public class BinaryExpression extends Statement {
             }
         }else if(l instanceof ClassInstance){
             ClassInstance li = (ClassInstance) l;
-            FunctionMethod fm = li.getRLClass().getBinaryOperation(operator, Type.clazz(li.getRLClass()), r.type());
+            FunctionMethod fm = li.getRLClass().findBinaryOperator(operator, Type.clazz(li.getRLClass()), r.type());
             if(fm != null){
                 Type lt = fm.getArguments().get(0).type;
                 Type rt = fm.getArguments().get(1).type;
@@ -62,7 +62,7 @@ public class BinaryExpression extends Statement {
             }
         }else if(r instanceof ClassInstance){
             ClassInstance ri = (ClassInstance) r;
-            FunctionMethod fm = ri.getRLClass().getBinaryOperation(operator, l.type(), Type.clazz(ri.getRLClass()));
+            FunctionMethod fm = ri.getRLClass().findBinaryOperator(operator, l.type(), Type.clazz(ri.getRLClass()));
             if(fm != null){
                 Type lt = fm.getArguments().get(0).type;
                 Type rt = fm.getArguments().get(1).type;

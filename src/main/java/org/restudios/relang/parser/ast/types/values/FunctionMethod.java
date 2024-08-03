@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class FunctionMethod extends RLMethod{
+public class FunctionMethod extends RLMethod {
     public final String name;
     public List<Visibility> visibility;
     public final BlockStatement code;

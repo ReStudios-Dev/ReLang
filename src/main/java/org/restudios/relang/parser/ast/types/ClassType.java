@@ -4,5 +4,7 @@ public enum ClassType {
     CLASS,
     INTERFACE,
     ABSTRACT,
-    ENUM
+    ENUM,
+
+    ANNOTATION
 }

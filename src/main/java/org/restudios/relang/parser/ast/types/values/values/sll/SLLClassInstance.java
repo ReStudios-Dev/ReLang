@@ -40,11 +40,11 @@ public class SLLClassInstance extends ClassInstance {
 
     @Override
     public FunctionMethod findMethodFromNameAndArguments(Context context, String name, Value[] values) {
-        ArrayList<FunctionMethod> mfs = getRLClass().getParentMethods(true, true, true);
+        ArrayList<FunctionMethod> mfs = getRLClass().getAllMethods(true, true, true);
         DynamicSLLClass dyn = (DynamicSLLClass) getRLClass();
         dyn.init();
         for (SLLMethod sllMethod : dyn.sllMethods) {
-            RLClass.tadd(sllMethod, false, mfs, context);
+            RLClass.tryToAdd(sllMethod, false, mfs, context);
         }
         return ClassInstance.findMethodFromNameAndArguments(name, values, mfs, context, this);
     }

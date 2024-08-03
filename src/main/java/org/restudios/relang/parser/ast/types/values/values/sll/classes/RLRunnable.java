@@ -1,6 +1,8 @@
 package org.restudios.relang.parser.ast.types.values.values.sll.classes;
 
+import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.values.Context;
+import org.restudios.relang.parser.ast.types.values.values.CustomTypeValue;
 import org.restudios.relang.parser.ast.types.values.values.ReFunction;
 import org.restudios.relang.parser.ast.types.values.values.Value;
 import org.restudios.relang.parser.ast.types.values.values.sll.SLLClassInstance;
@@ -16,6 +18,7 @@ public class RLRunnable extends SLLClassInstance {
 
 
     }
+
 
     @Override
     public String toString() {
@@ -39,5 +42,12 @@ public class RLRunnable extends SLLClassInstance {
 
     public Value run(Context context, Context callContext) {
         return value.runMethod(context, callContext);
+    }
+
+    public void setReturn(Type type) {
+        this.value.setReturnType(type);
+        String name = getSubTypes().get(0).getName();
+        getSubTypes().clear();
+        getSubTypes().add(new CustomTypeValue(name, type));
     }
 }

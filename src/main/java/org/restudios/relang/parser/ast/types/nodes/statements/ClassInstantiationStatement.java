@@ -30,8 +30,8 @@ public class ClassInstantiationStatement extends Statement {
 
     @Override
     public Value eval(Context context) {
-
         RLStackTraceElement elem = context.putTrace(this);
+        context.setCurrentMethod("<init>");
         Value v;
         if(clazz instanceof IdentifierExpression){
             v = ((IdentifierExpression) clazz).find(context, false);

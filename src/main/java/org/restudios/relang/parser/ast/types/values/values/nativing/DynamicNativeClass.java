@@ -43,7 +43,7 @@ public class DynamicNativeClass extends RLClass {
 
     @Override
     public ClassInstance instantiate(Context context, List<Type> types, Value... constructorArguments) {
-        initStatic();
+        initializeStaticContext();
         ClassInstance ci = new NativeClassInstance(this.getName(), types, context);
         createdChild(ci);
         FunctionMethod fm = callConstructor(context, ci.getContext(), constructorArguments);
@@ -63,11 +63,11 @@ public class DynamicNativeClass extends RLClass {
 
 
     @Override
-    public ArrayList<FunctionMethod> getParentMethods(boolean includeThis, boolean implementedOnly, boolean allowStatic) {
-        ArrayList<FunctionMethod> result = super.getParentMethods(includeThis, implementedOnly, allowStatic);
+    public ArrayList<FunctionMethod> getAllMethods(boolean includeThis, boolean implementedOnly, boolean allowStatic) {
+        ArrayList<FunctionMethod> result = super.getAllMethods(includeThis, implementedOnly, allowStatic);
         for (NativeMethod sllMethod : nativeClass.getNativeMethods()) {
             //noinspection DataFlowIssue
-            result = tadd(sllMethod, allowStatic, result, getCreatedContext());
+            result = tryToAdd(sllMethod, allowStatic, result, getCreatedContext());
         }
         return result;
     }
@@ -82,7 +82,7 @@ public class DynamicNativeClass extends RLClass {
                 for (FunctionArgument argument : nativeMethod.getArguments()) {
                     argument.type.init(getStaticContext());
                 }
-                fm = tadd(nativeMethod, true, getAllDeclaredMethods(), getCreatedContext());
+                fm = tryToAdd(nativeMethod, true, getAllDeclaredMethods(), getCreatedContext());
             }
         }
 

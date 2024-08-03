@@ -3,9 +3,11 @@ package org.restudios.relang.parser.ast.types.nodes.statements;
 import org.restudios.relang.parser.ast.types.Visibility;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Type;
+import org.restudios.relang.parser.ast.types.values.Context;
 import org.restudios.relang.parser.ast.types.values.FunctionMethod;
 import org.restudios.relang.parser.ast.types.values.values.ConstructorMethod;
 import org.restudios.relang.parser.ast.types.values.values.FunctionArgument;
+import org.restudios.relang.parser.ast.types.values.values.Value;
 import org.restudios.relang.parser.tokens.Token;
 
 import java.util.ArrayList;
@@ -27,5 +29,10 @@ public class ConstructorDeclarationStatement extends MethodDeclarationStatement{
                 args.add(new FunctionArgument(argument.variable, argument.type));
             }
         return new ConstructorMethod(new ArrayList<>(), args, returning, name, visibility, code, isAbstract, callSuper);
+    }
+
+    @Override
+    public Value eval(Context context) {
+        return super.eval(context);
     }
 }

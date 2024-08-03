@@ -3,7 +3,7 @@
 *
 * Initialization prohibited
 */
-public class enumeration {
+public native class enumeration {
 
     native public str name();
     native public int ordinal();

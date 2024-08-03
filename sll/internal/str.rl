@@ -1,7 +1,7 @@
 /**
 * String class. Any text within quotes returns this class
 */
-public abstract class str {
+public native abstract class str {
 
     /* native methods */
     /**

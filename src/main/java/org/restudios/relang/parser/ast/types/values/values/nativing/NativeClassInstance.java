@@ -34,11 +34,11 @@ public class NativeClassInstance extends ClassInstance {
 
     @Override
     public FunctionMethod findMethodFromNameAndArguments(Context context, String name, Value[] values) {
-        ArrayList<FunctionMethod> mfs = getRLClass().getParentMethods(true, true, true);
+        ArrayList<FunctionMethod> mfs = getRLClass().getAllMethods(true, true, true);
         DynamicNativeClass dyn = (DynamicNativeClass) getRLClass();
         dyn.init();
         for (NativeMethod sllMethod : dyn.nativeClass.getNativeMethods()) {
-            RLClass.tadd(sllMethod, false, mfs, context);
+            RLClass.tryToAdd(sllMethod, false, mfs, context);
         }
         return ClassInstance.findMethodFromNameAndArguments(name, values, mfs, context, this);
     }

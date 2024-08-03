@@ -74,6 +74,9 @@ public class Type extends Node {
     }
     public static Type clazz(String name, Context context){
         RLClass c = context.getClass(name);
+        if(c == null){
+            throw new RLException("Class "+name+" not found", Type.internal(context), context);
+        }
         c.loadClassData(context);
         return clazz(c);
     }
@@ -84,7 +87,7 @@ public class Type extends Node {
         return clazz(DynamicSLLClass.OBJECT, context);
     }
     public static Type castException(Context context){
-        return clazz("CastException.rl", context);
+        return clazz("CastException", context);
     }
     public static Type arrayOutOfBounds(Context context){
         return clazz("ArrayOutOfBoundsException", context);
@@ -288,5 +291,14 @@ public class Type extends Node {
             return this.token.string.equals(returnType.token.string);
         }
         return this.token == returnType.token;
+    }
+
+    public Type firstTypeOrVoid() {
+        if(subTypes.isEmpty()) return Primitives.VOID.type();
+        return subTypes.get(0);
+    }
+
+    public boolean isRunnable() {
+        return this.clazz != null && this.clazz.getName().equals(DynamicSLLClass.RUNNABLE);
     }
 }

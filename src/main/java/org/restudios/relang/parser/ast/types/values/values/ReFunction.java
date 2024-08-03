@@ -5,6 +5,8 @@ import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.nodes.expressions.CastExpression;
 import org.restudios.relang.parser.ast.types.values.Context;
 import org.restudios.relang.parser.ast.types.values.Variable;
+import org.restudios.relang.parser.ast.types.values.values.sll.classes.RLRunnable;
+import org.restudios.relang.parser.ast.types.values.values.sll.dynamic.DynamicSLLClass;
 import org.restudios.relang.parser.exceptions.RLException;
 
 import java.util.ArrayList;
@@ -75,9 +77,13 @@ public abstract class ReFunction {
         returned.type().init(context);
         returnType.init(context);
         returnType.initClassOrType(context);
-        if (!returned
-        .type()
-        .canBe(returnType)){
+        if(returned instanceof RLRunnable){
+            RLRunnable r = (RLRunnable) returned;
+            if(returnType.like(Type.clazz(DynamicSLLClass.RUNNABLE, context))){
+                r.setReturn(returnType.firstTypeOrVoid());
+            }
+        }
+        if (!returned.type().canBe(returnType)){
             throw new RLException("Returned incorrect type: " + returned.type().displayName(), Type.internal(context), callContext);
 
         }

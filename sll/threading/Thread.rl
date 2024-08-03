@@ -1,4 +1,4 @@
-public class Thread {
+public native class Thread {
     private readonly Runnable thread;
     private str name;
 

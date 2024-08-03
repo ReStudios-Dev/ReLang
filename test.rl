@@ -1,19 +1,18 @@
-
-
-public void second(){
-
-    third();
-}
-public void third(){
-    throw new NullPointerException("e");
-}
-
-public class Test {
-    public Test(){
+public annotation Hello {
+    public Hello( int i ){
+        out "1 arg: "+i;
     }
-    public void first(){
-        second();
+    public Hello( int i1, int i2 ){
+        out "2 args: "+i1+", "+i2;
+    }
+    public Hello() {
+        out "no args";
     }
 }
-Test t = new Test();
-t.first();
+
+@Hello(33)
+@Hello(11, 22)
+@Hello
+public class test {
+
+}

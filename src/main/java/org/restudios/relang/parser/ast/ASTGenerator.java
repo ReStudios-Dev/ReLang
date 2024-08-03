@@ -23,6 +23,7 @@ import org.restudios.relang.parser.ast.types.nodes.expressions.literals.TBoolean
 import org.restudios.relang.parser.ast.types.nodes.expressions.literals.numbers.CharExpression;
 import org.restudios.relang.parser.ast.types.nodes.expressions.literals.numbers.FloatExpression;
 import org.restudios.relang.parser.ast.types.nodes.expressions.literals.numbers.IntegerExpression;
+import org.restudios.relang.parser.ast.types.nodes.extra.AnnotationDefinition;
 import org.restudios.relang.parser.ast.types.nodes.statements.AssigmentStatement;
 import org.restudios.relang.parser.ast.types.nodes.statements.BlockStatement;
 import org.restudios.relang.parser.ast.types.nodes.statements.ClassDeclarationStatement;
@@ -118,14 +119,15 @@ public class ASTGenerator {
     public BlockStatement parseProgram() {
         ArrayList<Statement> statements = new ArrayList<>();
         while (!this.isAtEnd()){
-            statements.add(this.parseStatement());
+            Statement s = this.parseStatement();
+            statements.add(s);
         }
         statements.removeIf(value -> (value instanceof EmptyStatement));
         return new BlockStatement(eof, statements);
     }
 
     public Statement parseStatement(){
-        return parseStatement(true);
+        return parseStatement(false);
     }
     public Statement parseStatement(boolean checkSemicolon) {
         Statement statement = null;
@@ -221,7 +223,10 @@ public class ASTGenerator {
     }
     public Statement parseClassDefinition() {
         Token pf = peek();
+        List<AnnotationDefinition> annotationDefinitions = annotationDefinitions();
         ArrayList<Visibility> vis = parseVisibilities(true);
+        boolean isNative = match(TokenType.NATIVE);
+
         boolean isAbstract = match(TokenType.ABSTRACT);
         ClassType type = ClassType.CLASS;
 
@@ -234,6 +239,8 @@ public class ASTGenerator {
             type = ClassType.INTERFACE;
         } else if (!isAbstract && match(TokenType.ENUM)) {
             type = ClassType.ENUM;
+        }  else if (!isAbstract && match(TokenType.ANNOTATION)) {
+            type = ClassType.ANNOTATION;
         } else if (!isAbstract) {
             consume(TokenType.CLASS, "Class");
         }
@@ -262,7 +269,7 @@ public class ASTGenerator {
         }
 
         ClassBlock block = parseClassBlock(type);
-        return new ClassDeclarationStatement(pf, name!=null ? name.getString() : "", types, type, vis, block, extending, implementations);
+        return new ClassDeclarationStatement(pf, name!=null ? name.getString() : "", isNative, types, type, vis, block, extending, implementations, annotationDefinitions);
     }
     private ArrayList<String> parseCustomTypesDeclaration(){
         ArrayList<String> types = new ArrayList<>();
@@ -286,6 +293,7 @@ public class ASTGenerator {
             case ABSTRACT:
                 return parseAbstractClassBlock();
             case CLASS:
+            case ANNOTATION:
                 return parseBaseClassBlock();
             case ENUM:
                 return parseEnumClassBlock();
@@ -399,7 +407,7 @@ public class ASTGenerator {
     private Statement parseClassInsideDeclaration() {
         Statement statement = parseStatement();
         if (!(statement instanceof ClassDeclarationStatement) && !(statement instanceof OperatorOverloadStatement) && !(statement instanceof MethodDeclarationStatement)
-                && !(statement instanceof VariableDeclarationStatement)) {
+                && !(statement instanceof VariableDeclarationStatement) && !(statement instanceof EmptyStatement)) {
             unexpectedStatement(statement, "Class declaration, operator overloading, method declaration, or variable declaration");
         }
         return statement;
@@ -407,8 +415,11 @@ public class ASTGenerator {
 
     private Statement parseExpressionStatement() {
         Token pf = peek();
+
+
         Expression exp = parseExpression();
         if (!(exp instanceof Statement)) {
+            //return Statement.ofExpression(exp);
             unexpected(pf, "Statement");
             return null;
         }
@@ -711,7 +722,12 @@ public class ASTGenerator {
 
     private MethodCallStatement parseMethodCall() {
         Token name = advance();
-        return new MethodCallStatement(name, name.getString(), parseExpressionList());
+        Expression left = new IdentifierExpression(name, name.string);
+        while (peek().type == TokenType.OPEN_PARENTHESES){
+            left = new MethodCallStatement(name, left, parseExpressionList());
+        }
+        if(left instanceof MethodCallStatement) return (MethodCallStatement) left;
+        return null;
     }
 
     private ArrayList<Expression> parseExpressionList() {
@@ -824,17 +840,38 @@ public class ASTGenerator {
     }
     public boolean nextClass(){
         int initialPosition = current;
+        annotationDefinitions();
         if(isVisibility(peek().getType())) parseVisibilities(true);
         if(match(TokenType.OVERRIDE)){
             current = initialPosition;
             return false;
         }
+        match(TokenType.NATIVE);
         if(isClassDefinition(peek().getType())){
             current = initialPosition;
             return true;
         }
         current = initialPosition;
         return false;
+    }
+
+    private List<AnnotationDefinition> annotationDefinitions(){
+        List<AnnotationDefinition> result = new ArrayList<>();
+        while (peek().type == TokenType.ANNOTATION){
+            result.add(annotationDefinition());
+        }
+        return result;
+    }
+    private AnnotationDefinition annotationDefinition(){
+        if(match(TokenType.ANNOTATION)){
+            Expression annotation = parsePrimary();
+            List<Expression> arguments = new ArrayList<>();
+            if(peek().type == TokenType.OPEN_PARENTHESES){
+                arguments = parseExpressionList();
+            }
+            return new AnnotationDefinition(annotation, arguments);
+        }
+        throw new RuntimeException("Invalid annotation definition");
     }
 
     public OperatorOverloadStatement parseOperatorMethod(){
@@ -1249,9 +1286,13 @@ public class ASTGenerator {
         PsiMarker marker = listener.mark();
         Expression name = parseArrayItem();
         if (!isAtEnd()) {
-            if (peek().type == TokenType.OPEN_PARENTHESES) {
-                return marker.touch(new MethodCallStatement(name.getToken(), name.getToken().getString(), parseExpressionList()));
+            Expression before = name;
+            while (peek().type == TokenType.OPEN_PARENTHESES){
+                ArrayList<Expression> el = parseExpressionList();
+                before = marker.touch(new MethodCallStatement(name.getToken(), before, el));
             }
+
+            if(before instanceof MethodCallStatement) return before;
         }
         return marker.touch(name);
     }
@@ -1293,12 +1334,16 @@ public class ASTGenerator {
         }
         LambdaExpression lambda = this.parseLambda();
         if(lambda != null) return marker.touch(lambda);
-        if (this.match(TokenType.OPEN_PARENTHESES)) {
-            PsiMarker m = listener.mark();
-            Expression expression = this.parseExpression();
-            m.touch(expression);
-            this.consume(TokenType.CLOSE_PARENTHESES, "Expected ')' after expression.");
-            return marker.touch(new GroupingExpression(expression.token, expression));
+        if (peek().type == TokenType.OPEN_PARENTHESES) {
+            if(peekSafe(1).type != TokenType.CLOSE_PARENTHESES){
+                advance();
+                PsiMarker m = listener.mark();
+                LambdaExpression l = this.parseLambda();
+                Expression expression = this.parseExpression();
+                m.touch(expression);
+                this.consume(TokenType.CLOSE_PARENTHESES, "Expected ')' after expression.");
+                return marker.touch(new GroupingExpression(expression.token, expression));
+            }
         }
 
         if (this.match(TokenType.IDENTIFIER)) {
@@ -1326,6 +1371,11 @@ public class ASTGenerator {
                 current = rm;
                 return null;
             }
+            try {
+                Expression e = parseExpression();
+                return new LambdaExpression(pf, args, e);
+            } catch (Exception ignored) {
+            }
             Statement code = parseStatement(false);
             return new LambdaExpression(pf, args, code);
         }
@@ -1335,6 +1385,7 @@ public class ASTGenerator {
     private boolean isClassDefinition(TokenType type) {
         switch (type) {
             case INTERFACE:
+            case ANNOTATION:
             case CLASS:
             case ENUM:
             case ABSTRACT:

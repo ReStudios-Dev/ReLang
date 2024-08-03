@@ -10,6 +10,8 @@ import org.restudios.relang.parser.ast.types.values.Variable;
 import org.restudios.relang.parser.ast.types.values.Context;
 import org.restudios.relang.parser.ast.types.values.values.NullValue;
 import org.restudios.relang.parser.ast.types.values.values.Value;
+import org.restudios.relang.parser.ast.types.values.values.sll.classes.RLRunnable;
+import org.restudios.relang.parser.ast.types.values.values.sll.dynamic.DynamicSLLClass;
 import org.restudios.relang.parser.exceptions.RLException;
 import org.restudios.relang.parser.tokens.Token;
 
@@ -36,6 +38,11 @@ public class AssigmentStatement extends Statement {
         }
         Variable variable = (Variable) variableToAssign;
         Value valueToAssign = value.eval(context);
+        if(variable.getType().isRunnable()){
+            if(valueToAssign.type().isRunnable()){
+                ((RLRunnable) valueToAssign).setReturn(variable.getType().firstTypeOrVoid());
+            }
+        }
         if(operator.equals("??=")){
             if(variableToAssign.value() instanceof NullValue){
                 variable.setValue(CastExpression.cast(variable.getType(), valueToAssign, context), context);

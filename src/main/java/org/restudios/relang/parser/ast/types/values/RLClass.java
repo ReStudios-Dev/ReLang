@@ -5,6 +5,7 @@ import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.Visibility;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.nodes.expressions.CastExpression;
+import org.restudios.relang.parser.ast.types.nodes.extra.LoadedAnnotation;
 import org.restudios.relang.parser.ast.types.nodes.statements.ClassDeclarationStatement;
 import org.restudios.relang.parser.ast.types.values.values.*;
 import org.restudios.relang.parser.ast.types.values.values.sll.classes.RLArray;
@@ -25,6 +26,7 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
     private ArrayList<ConstructorMethod> constructors;
     private ArrayList<FunctionMethod> operatorsOverloading;
     private ArrayList<RLClass> subClasses;
+    private List<LoadedAnnotation> annotations = new ArrayList<>();
     private ArrayList<UnInitializedVariable> variables;
     private Context statics;
     private Context createdContext;
@@ -109,7 +111,7 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
             rlClass.createdChild(child);
         }
     }
-    public FunctionMethod checkMethod(String name, List<Visibility> visibility, Type returning, ArrayList<Type> arguments, boolean haveToBeOverride){
+    public FunctionMethod findMethod(String name, List<Visibility> visibility, Type returning, ArrayList<Type> arguments, boolean haveToBeOverride){
         gen:for (FunctionMethod method : methods) {
             if(method.name.equals(name)){
                 if(method.getReturnType().like(returning)){
@@ -144,7 +146,7 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
         }
         return methods;
     }
-    public ArrayList<FunctionMethod> neededToOverride(){
+    public ArrayList<FunctionMethod> getMethodsNeedOverride(){
         ArrayList<FunctionMethod> result = new ArrayList<>();
         if(extending != null) {
             if(extending.isAbstract()){
@@ -158,10 +160,10 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
 
         return result;
     }
-    public ArrayList<FunctionMethod> getMethodsThatCanBeOverridden(boolean includeThis){
+    public ArrayList<FunctionMethod> getOverridableMethods(boolean includeThis){
         ArrayList<FunctionMethod> result = new ArrayList<>();
         if(extending != null) {
-            result.addAll(extending.getMethodsThatCanBeOverridden(true));
+            result.addAll(extending.getOverridableMethods(true));
         }
         for (RLClass rlClass : implementing) {
             result.addAll(getOnlyAbstractMethods(rlClass.methods));
@@ -177,8 +179,8 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
     }
     public ArrayList<FunctionMethod> getNotImplementedAbstractMethods(){
         ArrayList<FunctionMethod> result = new ArrayList<>();
-        for (FunctionMethod method : neededToOverride()) {
-            if(checkMethod(method.name, method.visibility, method.getReturnType(), method.getArgumentTypes(), true) == null){
+        for (FunctionMethod method : getMethodsNeedOverride()) {
+            if(findMethod(method.name, method.visibility, method.getReturnType(), method.getArgumentTypes(), true) == null){
                 result.add(method);
             }
         }
@@ -195,11 +197,11 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
         return result;
     }
 
-    public ArrayList<FunctionMethod> getParentMethods(boolean includeThis, boolean implementedOnly, boolean allowStatic){
+    public ArrayList<FunctionMethod> getAllMethods(boolean includeThis, boolean implementedOnly, boolean allowStatic){
         ArrayList<FunctionMethod> result = new ArrayList<>();
 
         if(extending != null){
-            for (FunctionMethod parentMethod : extending.getParentMethods(true, implementedOnly, allowStatic)) {
+            for (FunctionMethod parentMethod : extending.getAllMethods(true, implementedOnly, allowStatic)) {
 
                 if(!allowStatic && parentMethod.visibility.contains(Visibility.STATIC))continue;
                 if(result.contains(parentMethod))continue;
@@ -214,7 +216,7 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
         }
         if(!implementedOnly){
             for (RLClass rlClass : implementing) {
-                for (FunctionMethod parentMethod : rlClass.getParentMethods(true, false, allowStatic)) {
+                for (FunctionMethod parentMethod : rlClass.getAllMethods(true, false, allowStatic)) {
                     if(!allowStatic && parentMethod.visibility.contains(Visibility.STATIC))continue;
                     if(result.contains(parentMethod))continue;
                     result.add(parentMethod);
@@ -222,12 +224,12 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
             }
         }
         for (FunctionMethod method : methods) {
-            tadd(method, allowStatic, result, createdContext);
+            tryToAdd(method, allowStatic, result, createdContext);
 
         }
         return result;
     }
-    public static ArrayList<FunctionMethod> tadd(FunctionMethod method, boolean allowStatic, ArrayList<FunctionMethod> result, Context context){
+    public static ArrayList<FunctionMethod> tryToAdd(FunctionMethod method, boolean allowStatic, ArrayList<FunctionMethod> result, Context context){
         if(!allowStatic && method.visibility.contains(Visibility.STATIC)) return result;
         if(method.visibility.contains(Visibility.OVERRIDE) || method.isNative){
             List<FunctionMethod> remove = new ArrayList<>();
@@ -305,7 +307,7 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
                 }
             }
         }
-        ArrayList<FunctionMethod> fa = getMethodsThatCanBeOverridden(false);
+        ArrayList<FunctionMethod> fa = getOverridableMethods(false);
         for (FunctionMethod method : methods) {
 
             for (FunctionMethod functionMethod : methods) {
@@ -368,7 +370,7 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
             }
         }
     }
-    public void initStatic(){
+    public void initializeStaticContext(){
         if(!initialized){
             initialized = true;
             for (FunctionMethod method : methods) {
@@ -390,7 +392,7 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
     }
 
 
-    public CastOperatorOverloadFunctionMethod getExplicitOverloading(Type to){
+    public CastOperatorOverloadFunctionMethod findExplicitOperator(Type to){
         for (FunctionMethod functionMethod : operatorsOverloading) {
             if(functionMethod instanceof CastOperatorOverloadFunctionMethod){
                 CastOperatorOverloadFunctionMethod overload = (CastOperatorOverloadFunctionMethod)functionMethod;
@@ -402,11 +404,11 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
             }
         }
         if(extending != null){
-            return extending.getExplicitOverloading(to);
+            return extending.findExplicitOperator(to);
         }
         return null;
     }
-    public CastOperatorOverloadFunctionMethod getImplicitOverloading(Type to){
+    public CastOperatorOverloadFunctionMethod findImplicitOperator(Type to){
         for (FunctionMethod functionMethod : operatorsOverloading) {
             if(functionMethod instanceof CastOperatorOverloadFunctionMethod){
                 CastOperatorOverloadFunctionMethod overload = (CastOperatorOverloadFunctionMethod)functionMethod;
@@ -419,7 +421,7 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
         }
         return null;
     }
-    public FunctionMethod getBinaryOperation(String operator, Type left, Type right) {
+    public FunctionMethod findBinaryOperator(String operator, Type left, Type right) {
         for (FunctionMethod functionMethod : operatorsOverloading) {
             if(!(functionMethod instanceof CastOperatorOverloadFunctionMethod)){
                 if(functionMethod.name.equals(operator)){
@@ -437,10 +439,10 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
         }
         return null;
     }
-    public FunctionMethod getBinaryOperation(String operator, RLClass left, RLClass right) {
-        return getBinaryOperation(operator, Type.clazz(left), Type.clazz(right));
+    public FunctionMethod findBinaryOperator(String operator, RLClass left, RLClass right) {
+        return findBinaryOperator(operator, Type.clazz(left), Type.clazz(right));
     }
-    private FunctionMethod find(String name, LinkedHashMap<String, Type> arguments, ArrayList<FunctionMethod> methods, Context ci){
+    private FunctionMethod findMethod(String name, LinkedHashMap<String, Type> arguments, ArrayList<FunctionMethod> methods, Context ci){
         mfs:for (FunctionMethod method : methods) {
             if(name.equals(method.name)){
                 ArrayList<Type> types = new ArrayList<>(arguments.values());
@@ -463,17 +465,17 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
         }
         return null;
     }
-    public FunctionMethod originalMethod(String name, LinkedHashMap<String, Type> arguments, Context context) {
-        FunctionMethod fm = find(name, arguments, methods, context);
+    public FunctionMethod findRawMethod(String name, LinkedHashMap<String, Type> arguments, Context context) {
+        FunctionMethod fm = findMethod(name, arguments, methods, context);
         if(fm != null) return fm;
-        fm = find(name, arguments, getParentMethods(true, false, false), context);
+        fm = findMethod(name, arguments, getAllMethods(true, false, false), context);
         if(fm != null) return fm;
         throw new RLException("Method not found: " + name, Type.internal(context), context);
     }
 
     @Override
     public ClassInstance instantiate(Context context, List<Type> types, Value... constructorArguments) {
-        initStatic();
+        initializeStaticContext();
         ClassInstance instance = new ClassInstance(this, types, context);
         createdChild(instance);
         String cmethod = context.getCurrentMethod();
@@ -554,7 +556,7 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
     }
 
     public FunctionMethod findStaticMethodFromNameAndArguments(String name, Value[] values, Context from) {
-        initStatic();
+        initializeStaticContext();
         ArrayList<FunctionMethod> staticMethods = getStaticMethods();
         return ClassInstance.findMethodFromNameAndArguments(name, values, staticMethods, from, null);
     }
@@ -615,7 +617,7 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
     }
     public Value getReflectionMethods(Context context){
         RLArray array = new RLArray(Type.clazz(DynamicSLLClass.REFL_CLASSMETHOD, context), context);
-        for (FunctionMethod parentMethod : this.getParentMethods(true, true, true)) {
+        for (FunctionMethod parentMethod : this.getAllMethods(true, true, true)) {
             array.add(parentMethod.getReflectionClass(context));
         }
         return array;
@@ -630,7 +632,7 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
 
     public Value getReflectionType(Context context){
         RLEnumClass e = ((RLEnumClass) context.getClass(DynamicSLLClass.REFL_CLASSTYPE));
-        e.initStatic();
+        e.initializeStaticContext();
         for (EnumItemValue value : e.values) {
             if(value.name().equalsIgnoreCase(classType.name())){
                 return e.instantiateEnumeration(context, value);
@@ -686,5 +688,9 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
     ClassDeclarationStatement statement;
     public void setDeclarationStatement(ClassDeclarationStatement classDeclarationStatement) {
         statement = classDeclarationStatement;
+    }
+
+    public List<LoadedAnnotation> getAnnotations() {
+        return annotations;
     }
 }

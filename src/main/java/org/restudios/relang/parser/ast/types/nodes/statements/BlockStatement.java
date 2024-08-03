@@ -1,8 +1,10 @@
 package org.restudios.relang.parser.ast.types.nodes.statements;
 
 import org.restudios.relang.parser.ast.types.nodes.DeclarationStatement;
+import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 import org.restudios.relang.parser.ast.types.values.Context;
+import org.restudios.relang.parser.ast.types.values.values.Value;
 import org.restudios.relang.parser.tokens.Token;
 
 import java.util.ArrayList;
@@ -15,6 +17,15 @@ public class BlockStatement extends Statement {
         this.statements = statements;
     }
 
+    public static BlockStatement returnStatement(Expression value, Token token) {
+        BlockStatement bs = new BlockStatement(token, new ArrayList<>());
+
+        Statement ret = new ReturnStatement(token, value);
+
+        bs.statements.add(ret);
+
+        return bs;
+    }
 
 
     @Override

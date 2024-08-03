@@ -55,8 +55,8 @@ public class DynamicSLLClass extends RLClass {
     }
 
     @Override
-    public void initStatic() {
-        super.initStatic();
+    public void initializeStaticContext() {
+        super.initializeStaticContext();
         init();
     }
 
@@ -64,7 +64,7 @@ public class DynamicSLLClass extends RLClass {
     @Override
     public ClassInstance instantiate(Context context, List<Type> types, Value... constructorArguments) {
         loadClassData(context);
-        initStatic();
+        initializeStaticContext();
         ClassInstance ci;
         if(getName().equals(DynamicSLLClass.ARRAY) && constructorArguments.length == 0 && (types.size() == 1 || types.isEmpty())){
             Type t = types.isEmpty() ? Type.clazz(DynamicSLLClass.OBJECT, context) : types.get(0);
@@ -87,11 +87,11 @@ public class DynamicSLLClass extends RLClass {
     }
 
     @Override
-    public ArrayList<FunctionMethod> getParentMethods(boolean includeThis, boolean implementedOnly, boolean allowStatic) {
-        ArrayList<FunctionMethod> result = super.getParentMethods(includeThis, implementedOnly, allowStatic);
+    public ArrayList<FunctionMethod> getAllMethods(boolean includeThis, boolean implementedOnly, boolean allowStatic) {
+        ArrayList<FunctionMethod> result = super.getAllMethods(includeThis, implementedOnly, allowStatic);
         init();
         for (FunctionMethod sllMethod : sllMethods) {
-            result = tadd(sllMethod, allowStatic, getAllDeclaredMethods(), getCreatedContext());
+            result = tryToAdd(sllMethod, allowStatic, getAllDeclaredMethods(), getCreatedContext());
         }
         return result;
     }
@@ -109,7 +109,7 @@ public class DynamicSLLClass extends RLClass {
                 for (FunctionArgument argument : sllMethod.getArguments()) {
                     argument.type.init(getStaticContext());
                 }
-                fm = tadd(sllMethod, true, getAllDeclaredMethods(), getCreatedContext());
+                fm = tryToAdd(sllMethod, true, getAllDeclaredMethods(), getCreatedContext());
             }
         }
         return fm;

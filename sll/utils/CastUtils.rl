@@ -1,4 +1,4 @@
-public class CastUtils {
+public native class CastUtils {
     native static int strToInt(str seq);
     native static int strToInts(str seq);
     native static float strToFloat(str seq);

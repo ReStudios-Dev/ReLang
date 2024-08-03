@@ -1,4 +1,4 @@
-public abstract class ClassMethod {
+public native abstract class ClassMethod {
     public readonly str name;
     public readonly ObjectVisibility visibility;
     public readonly bool isStatic;

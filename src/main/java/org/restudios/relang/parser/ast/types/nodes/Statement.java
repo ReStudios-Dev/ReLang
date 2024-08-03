@@ -10,6 +10,15 @@ public abstract class Statement extends Expression {
         super(token);
     }
 
+    public static Statement ofExpression(Expression exp) {
+        return new Statement(exp.token) {
+            @Override
+            public void execute(Context context) {
+                exp.eval(context);
+            }
+        };
+    }
+
     @Override
     public Value eval(Context context) {
         return new NullValue();

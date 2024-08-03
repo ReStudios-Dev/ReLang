@@ -1,4 +1,4 @@
-public class array<T> {
+public native class array<T> {
     native public T get(int index);
     native public void add(T value);
     native public void removeAt(int index);

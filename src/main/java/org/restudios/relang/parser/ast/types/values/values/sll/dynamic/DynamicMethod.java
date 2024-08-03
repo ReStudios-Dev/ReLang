@@ -19,7 +19,7 @@ public class DynamicMethod extends FunctionMethod {
     private final Function<NativeMethodArguments, Value> handler;
 
     public DynamicMethod(String name, boolean staticMethod, LinkedHashMap<String, Type> arguments, Function<NativeMethodArguments, Value> handler, ClassInstance clazz) {
-        super(clazz.getRLClass().originalMethod(name, arguments, clazz.getContext()));
+        super(clazz.getRLClass().findRawMethod(name, arguments, clazz.getContext()));
         this.staticMethod = staticMethod;
         this.name = name;
         this.arguments = arguments;

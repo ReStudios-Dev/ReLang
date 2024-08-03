@@ -72,12 +72,20 @@ public class LexerV2 {
         Token special = parseSpecial(buff);
         if(special != null) return special;
 
+        Token annotation = parseAnnotation(buff);
+        if(annotation != null) return annotation;
+
         Token identifier = parseIdentifier(buff);
         if(identifier != null) return identifier;
 
 
+
         this.error("Unexpected");
         return null;
+    }
+    private Token parseAnnotation(String buff){
+        if(!buff.startsWith("@")) return null;
+        return new Token(TokenType.ANNOTATION, source, "@", position, lc(), lc(position + 1));
     }
     private Token parseIdentifier(String buff){
         StringBuilder all = new StringBuilder();
@@ -362,6 +370,7 @@ public class LexerV2 {
         keywords.put("native", TokenType.NATIVE);
         keywords.put("override", TokenType.OVERRIDE);
         keywords.put("interface", TokenType.INTERFACE);
+        keywords.put("annotation", TokenType.ANNOTATION);
         keywords.put("class", TokenType.CLASS);
         keywords.put("implements", TokenType.IMPLEMENTS);
         keywords.put("extends", TokenType.EXTENDS);

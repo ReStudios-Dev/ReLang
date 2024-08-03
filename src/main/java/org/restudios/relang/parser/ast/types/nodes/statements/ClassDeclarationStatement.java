@@ -5,6 +5,8 @@ import org.restudios.relang.parser.ast.types.Visibility;
 import org.restudios.relang.parser.ast.types.nodes.DeclarationStatement;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Type;
+import org.restudios.relang.parser.ast.types.nodes.extra.AnnotationDefinition;
+import org.restudios.relang.parser.ast.types.nodes.extra.LoadedAnnotation;
 import org.restudios.relang.parser.ast.types.nodes.statements.classes.ClassBlock;
 import org.restudios.relang.parser.ast.types.nodes.statements.classes.EnumClassBlock;
 import org.restudios.relang.parser.ast.types.values.*;
@@ -19,6 +21,8 @@ import org.restudios.relang.parser.tokens.Token;
 import org.restudios.relang.parser.utils.NativeClass;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ClassDeclarationStatement extends DeclarationStatement {
     public final String name;
@@ -29,8 +33,10 @@ public class ClassDeclarationStatement extends DeclarationStatement {
     public final ClassBlock body;
     public final Expression extending;
     public final ArrayList<Expression> implementations;
+    public final List<AnnotationDefinition> annotations;
+    public final boolean isNative;
 
-    public ClassDeclarationStatement(Token token, String name, ArrayList<String> subTypes, ClassType type, ArrayList<Visibility> visibilities, ClassBlock body, Expression extending, ArrayList<Expression> implementations) {
+    public ClassDeclarationStatement(Token token, String name, boolean isNative, ArrayList<String> subTypes, ClassType type, ArrayList<Visibility> visibilities, ClassBlock body, Expression extending, ArrayList<Expression> implementations, List<AnnotationDefinition> annotations) {
         super(token);
         this.name = name;
         this.subTypes = subTypes;
@@ -39,6 +45,8 @@ public class ClassDeclarationStatement extends DeclarationStatement {
         this.body = body;
         this.extending = extending;
         this.implementations = implementations;
+        this.annotations = annotations;
+        this.isNative = isNative;
     }
 
     public RLClass clazz(Context context){
@@ -50,7 +58,7 @@ public class ClassDeclarationStatement extends DeclarationStatement {
             }
         }
         if(clazz == null) {
-            if (DynamicValues.sllClasses.contains(name)) {
+            if(this.isNative){
                 clazz = new DynamicSLLClass(name, type, visibilities);
             } else {
                 if (type == ClassType.ENUM) {
@@ -65,6 +73,20 @@ public class ClassDeclarationStatement extends DeclarationStatement {
         return clazz;
     }
     public void doLoad(RLClass clazz, Context context){
+        for (AnnotationDefinition annotation : annotations) {
+            Value v = annotation.getName().eval(context).finalExpression();
+            if(!(v instanceof RLClass)){
+                throw new RuntimeException("Annotation can be only regular class");
+            }
+            RLClass cl = (RLClass) v;
+            Value[] args = new Value[annotation.getExpressions().size()];
+            for (int i = 0; i < args.length; i++) {
+                args[i] = annotation.getExpressions().get(i).eval(context).finalExpression();
+            }
+            ClassInstance ci = cl.instantiate(context, args);
+
+            clazz.getAnnotations().add(new LoadedAnnotation(ci));
+        }
         Value ext = null;
         if(extending != null){
             ext = extending.eval(context);

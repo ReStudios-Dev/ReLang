@@ -4,11 +4,11 @@ import org.restudios.relang.parser.ast.types.Visibility;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 import org.restudios.relang.parser.ast.types.nodes.Type;
-import org.restudios.relang.parser.ast.types.values.ClassInstance;
-import org.restudios.relang.parser.ast.types.values.Context;
-import org.restudios.relang.parser.ast.types.values.FunctionMethod;
-import org.restudios.relang.parser.ast.types.values.RLClass;
+import org.restudios.relang.parser.ast.types.nodes.expressions.LambdaExpression;
+import org.restudios.relang.parser.ast.types.values.*;
 import org.restudios.relang.parser.ast.types.values.values.Value;
+import org.restudios.relang.parser.ast.types.values.values.sll.classes.RLRunnable;
+import org.restudios.relang.parser.ast.types.values.values.sll.dynamic.DynamicSLLClass;
 import org.restudios.relang.parser.exceptions.RLException;
 import org.restudios.relang.parser.tokens.Token;
 import org.restudios.relang.parser.utils.RLStackTrace;
@@ -17,12 +17,12 @@ import org.restudios.relang.parser.utils.RLStackTraceElement;
 import java.util.ArrayList;
 
 public class MethodCallStatement extends Statement {
-    public final String name;
+    public final Expression method;
     public final ArrayList<Expression> arguments;
 
-    public MethodCallStatement(Token token, String name, ArrayList<Expression> arguments) {
+    public MethodCallStatement(Token token, Expression method, ArrayList<Expression> arguments) {
         super(token);
-        this.name = name;
+        this.method = method;
         this.arguments = arguments;
     }
 
@@ -33,17 +33,17 @@ public class MethodCallStatement extends Statement {
             values[i] = arguments.get(i).eval(context).initContext(context).finalExpression();
         }
 
-        FunctionMethod fm = ci.findMethodFromNameAndArguments(context, name, values);
+        FunctionMethod fm = ci.findMethodFromNameAndArguments(context, method.token.string, values);
         ClassInstance ca = context.thisClass();
         if(fm == null) {
-            throw new RLException("Method " + name + " not found in class "+ci.getRLClass().getName(), Type.internal(context), context);
+            throw new RLException("Method " + method + " not found in class "+ci.getRLClass().getName(), Type.internal(context), context);
         }
         if(fm.visibility.contains(Visibility.PRIVATE)){
             if(ca == null){
-                throw new RLException("Cannot access private method "+name+" from outside class "+ci.getRLClass().getName(), Type.internal(context), context);
+                throw new RLException("Cannot access private method "+ method +" from outside class "+ci.getRLClass().getName(), Type.internal(context), context);
             }
             if(!ca.getRLClass().equals(ci.getRLClass())){
-                throw new RLException("Cannot access private method "+name+" from outside class "+ci.getRLClass().getName(), Type.internal(context), context);
+                throw new RLException("Cannot access private method "+ method +" from outside class "+ci.getRLClass().getName(), Type.internal(context), context);
             }
         }
         RLStackTrace bef = ci.getContext().getTrace();
@@ -59,14 +59,30 @@ public class MethodCallStatement extends Statement {
         for (int i = 0; i < arguments.size(); i++) {
             values[i] = arguments.get(i).eval(context);
         }
-        for (FunctionMethod method : context.getMethods(name)) {
+        Value va = null;
+        try {
+            va = method.eval(context).finalExpression();
+        }catch (RLException e){
+            if(!e.getMessage().startsWith("Could not find")){
+                throw e;
+            }
+        }
+        if(va != null){
+            if(va instanceof RLRunnable){
+
+                return ((RLRunnable) va).getFunction().execute(((RLRunnable) va).getContext(), context);
+
+            }
+        }
+
+        for (FunctionMethod method : context.getMethods(method.token.string)) {
             if(method.canBeExecuted(values, context)) {
                 Value v =  method.runMethod(context, context, values);
                 context.removeTrace(elem);
                 return v;
             }
         }
-        throw new RLException("Method " + name + " not found", Type.internal(context), context);
+        throw new RLException("Method " + method.token.string + " not found", Type.internal(context), context);
 
     }
 
@@ -85,17 +101,17 @@ public class MethodCallStatement extends Statement {
         for (int i = 0; i < arguments.size(); i++) {
             values[i] = arguments.get(i).eval(context);
         }
-        FunctionMethod fm = clazz.findStaticMethodFromNameAndArguments(name, values, context);
+        FunctionMethod fm = clazz.findStaticMethodFromNameAndArguments(method.token.string, values, context);
         if(fm == null){
-            throw new RLException("Method " + name + " not found", Type.internal(context), context);
+            throw new RLException("Method " + method.token.string + " not found", Type.internal(context), context);
         }
         ClassInstance ca = context.thisClass();
         if(fm.visibility.contains(Visibility.PRIVATE)){
             if(ca == null){
-                throw new RLException("Cannot access private method "+name+" from outside class "+clazz.getName(), Type.internal(context), context);
+                throw new RLException("Cannot access private method "+ method.token.string +" from outside class "+clazz.getName(), Type.internal(context), context);
             }
             if(!ca.getRLClass().equals(clazz)){
-                throw new RLException("Cannot access private method "+name+" from outside class "+clazz.getName(), Type.internal(context), context);
+                throw new RLException("Cannot access private method "+ method.token.string +" from outside class "+clazz.getName(), Type.internal(context), context);
             }
         }
         return fm.runMethod(context, context, values);

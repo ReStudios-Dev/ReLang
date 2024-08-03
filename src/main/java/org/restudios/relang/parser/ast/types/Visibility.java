@@ -16,7 +16,7 @@ public enum Visibility {
     public Value getReflectionVisibilityClass(Context context) {
         RLEnumClass e = ((RLEnumClass) context.getClass(DynamicSLLClass.REFL_VISIBILITY));
         e.initContext(context);
-        e.initStatic();
+        e.initializeStaticContext();
         for (EnumItemValue value : e.values) {
             if (value.name().equalsIgnoreCase(this.name())) {
                 return e.instantiateEnumeration(context, value);
