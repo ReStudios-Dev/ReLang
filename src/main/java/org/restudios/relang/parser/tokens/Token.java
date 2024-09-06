@@ -48,4 +48,8 @@ public class Token {
     public String toString() {
         return type.name();
     }
+
+    public String stringify() {
+        return source+":"+from;
+    }
 }

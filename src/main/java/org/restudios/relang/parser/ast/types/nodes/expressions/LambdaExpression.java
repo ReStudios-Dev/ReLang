@@ -1,5 +1,6 @@
 package org.restudios.relang.parser.ast.types.nodes.expressions;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
 import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.Visibility;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
@@ -13,6 +14,7 @@ import org.restudios.relang.parser.ast.types.values.values.FunctionArgument;
 import org.restudios.relang.parser.ast.types.values.values.ReFunction;
 import org.restudios.relang.parser.ast.types.values.values.Value;
 import org.restudios.relang.parser.ast.types.values.values.sll.classes.RLRunnable;
+import org.restudios.relang.parser.ast.types.values.values.sll.dynamic.DynamicSLLClass;
 import org.restudios.relang.parser.tokens.Token;
 
 import java.util.ArrayList;
@@ -38,10 +40,26 @@ public class LambdaExpression extends Statement {
         this.body = null;
         this.byBody = false;
     }
+
+    @Override
+    public Type predictType(AnalyzerContext c) {
+        return c.getClass(DynamicSLLClass.RUNNABLE).type();
+    }
+
+    @Override
+    public void analyze(AnalyzerContext context) {
+        AnalyzerContext nc = context.create();
+        for (VariableDeclarationStatement argument : arguments) {
+            nc.putVariable(argument);
+        }
+        if(byBody) body.analyze(nc);
+        else expression.predictType(nc);
+    }
+
     public Value typeEval(Context context, Type type){
         ArrayList<FunctionArgument> args = new ArrayList<>();
         for (VariableDeclarationStatement argument : arguments) {
-            args.add(new FunctionArgument(argument.variable, argument.type));
+            args.add(new FunctionArgument(argument.variable, argument.type, false));
         }
         if(byBody){
             BlockStatement statement;
@@ -50,10 +68,10 @@ public class LambdaExpression extends Statement {
             }else{
                 statement = new BlockStatement(token, new ArrayList<>(Collections.singletonList(body)));
             }
-            ReFunction reFunction = new FunctionMethod(new ArrayList<>(), args,type, "<lambda>", new ArrayList<>(Collections.singletonList(Visibility.READONLY)), statement, false, false);
+            ReFunction reFunction = new FunctionMethod(new ArrayList<>(), args,type, "<lambda>", new ArrayList<>(Collections.singletonList(Visibility.READONLY)), statement, false, false, new ArrayList<>());
             return new RLRunnable(reFunction, context);
         } else {
-            ReFunction reFunction = new FunctionMethod(new ArrayList<>(), args, type, "<lambda>", new ArrayList<>(Collections.singletonList(Visibility.READONLY)), BlockStatement.returnStatement(expression, expression.token), false, false);
+            ReFunction reFunction = new FunctionMethod(new ArrayList<>(), args, type, "<lambda>", new ArrayList<>(Collections.singletonList(Visibility.READONLY)), BlockStatement.returnStatement(expression, expression.token), false, false, new ArrayList<>());
             return new RLRunnable(reFunction, context);
         }
     }

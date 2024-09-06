@@ -1,5 +1,7 @@
 package org.restudios.relang.parser.ast.types.nodes.statements;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
 import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
@@ -23,6 +25,26 @@ public class UnaryStatement extends Statement {
         this.operator = operator;
         this.expression = expression;
         this.prefix = prefix;
+    }
+
+    @Override
+    public Type predictType(AnalyzerContext c) {
+        switch (operator){
+            case "-":
+            case "~":
+            case "++":
+            case "--":
+                return expression.predictType(c);
+            case "!":
+                return Primitives.BOOL.type();
+
+        }
+        throw new AnalyzerError("Invalid unary operator", token);
+    }
+
+    @Override
+    public void analyze(AnalyzerContext context) {
+        predictType(context);
     }
 
     @Override
@@ -94,7 +116,6 @@ public class UnaryStatement extends Statement {
                     return new FloatValue(ret);
                 }
                 throw new RLException("Unsupported operation: decrement on "+v.getType().displayName(), Type.internal(context), context);
-                // TODO other
         }
         return super.eval(context);
     }

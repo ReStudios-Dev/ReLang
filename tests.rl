@@ -1,3 +1,16 @@
+public interface TestAction {
+    public bool test();
+}
+public void test(str name, TestAction action) {
+  if(action.test()){
+    out "[ok] "+name;
+  }else{
+    err "[err] "+name;
+  }
+}
+
+test("test lambda", () -> true);
+
 // IFS
 if (true) {
     out "[ok] if true";
@@ -140,6 +153,40 @@ public class test {
 }
 
 
+public class aa {
+
+    public void testVarArgs(int i, str... args){
+        if(i == 3 && args[0] == "2" && args[1] == "3"){
+            out "[ok] varargs 2/2";
+        }else {
+            err "[err] varargs 2/2";
+        }
+    }
+
+    public void testVarArgs(int i, int... args){
+        if(i == 1 && args[0] == 2 && args[1] == 3){
+            out "[ok] varargs 1/2";
+        }else {
+            err "[err] varargs 1/2";
+        }
+    }
+
+}
+aa x = new aa();
+x.testVarArgs(1, 2, 3);
+x.testVarArgs(3, "2", "3");
+
+
+class A {}
+
+class B extends A {}
+
+A a = new B();
+
+if(a instanceof A) {out "[ok] instanceof 1/3";} else err "[err] instanceof 1/3";
+if(a instanceof B) {out "[ok] instanceof 2/3";} else err "[err] instanceof 2/3";
+if(!(a instanceof aa)) {out "[ok] instanceof 3/3";} else err "[err] instanceof 3/3";
+
 // /CLASSES
 
 // LAMBDA
@@ -153,5 +200,21 @@ if(sf() == 117){
 }
 
 () -> { out "[ok] inline lambda"; }();
+
+
+public interface Sum {
+    public int sum(int first, int second);
+}
+
+public int multiply(Sum sumManager, int first, int second, int power){
+    return sumManager.sum(first, second) * power;
+}
+
+int i = multiply(  (int first, int second) -> first + second  ,   2, 3,   2);
+if(i == 10){
+    out "[ok] lambda to interface";
+}else {
+    err "[err] lambda to interface";
+}
 
 // /LAMBDA

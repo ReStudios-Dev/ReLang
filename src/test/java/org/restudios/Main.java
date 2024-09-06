@@ -2,11 +2,10 @@ package org.restudios;
 
 import org.restudios.relang.ClassPath;
 import org.restudios.relang.ReLang;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.util.HashMap;
 import java.util.Map;
 
 public class Main {
@@ -23,9 +22,15 @@ public class Main {
         for (Map.Entry<String, String> entry : map.entrySet()) {
             relang.getClassLoader().addClassPath(new ClassPath(entry.getKey(), entry.getValue()));
         } 
+        relang.prepare();
+
+        try {
+            relang.analyze();
+        }catch (AnalyzerError error){
+            error.printStackTrace(System.err);
+        }
 
         int exitCode = relang.run();
-
 
         System.out.println();
         System.out.println("----------");
@@ -33,4 +38,5 @@ public class Main {
         System.out.println("Time elapsed: "+(System.currentTimeMillis()-l)+"ms");
 
     }
+
 }

@@ -1,5 +1,6 @@
 package org.restudios.relang.parser.ast.types.nodes.statements;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 import org.restudios.relang.parser.ast.types.values.Context;
@@ -12,6 +13,11 @@ public class ReturnStatement extends Statement {
     public ReturnStatement(Token token, Expression exception) {
         super(token);
         this.exception = exception;
+    }
+
+    @Override
+    public void analyze(AnalyzerContext context) {
+        exception.predictType(context);
     }
 
     @Override

@@ -1,5 +1,7 @@
 package org.restudios.relang.parser.ast.types.nodes.statements;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
 import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.Visibility;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
@@ -21,14 +23,28 @@ public class VariableDeclarationStatement extends Statement {
     public final Type type;
     public final String variable;
     public final ArrayList<Visibility> visibilities;
+    public final boolean varArgs;
     public final Expression value;
 
-    public VariableDeclarationStatement(Token token, Type type, String variable, ArrayList<Visibility> visibilities, Expression value) {
+    public VariableDeclarationStatement(Token token, Type type, boolean varArgs, String variable, ArrayList<Visibility> visibilities, Expression value) {
         super(token);
         this.type = type;
         this.variable = variable;
         this.visibilities = visibilities;
         this.value = value;
+        this.varArgs = varArgs;
+    }
+
+    @Override
+    public void analyze(AnalyzerContext context) {
+        context.putVariable(variable, type);
+        type.initClassOrType(context);
+        if (value != null){
+            Type t = value.predictType(context);
+            if(!t.canBe(type)){
+                throw new AnalyzerError("Invalid assigment value", value.token);
+            }
+        }
     }
 
     public Variable asVariable(Context context) {

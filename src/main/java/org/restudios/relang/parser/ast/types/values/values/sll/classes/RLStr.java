@@ -35,6 +35,8 @@ public class RLStr extends SLLClassInstance {
     }
 
 
-
-
+    @Override
+    public Object convertNative() {
+        return value;
+    }
 }

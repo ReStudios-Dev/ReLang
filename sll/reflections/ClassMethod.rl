@@ -16,10 +16,10 @@ public native abstract class ClassMethod {
         if(this.isStatic){
             result += " static";
         }
-        result += this.returnType;
+        //result += this.returnType;
         result += this.name;
         result += "(";
-        result += this.arguments.join(", ");
+        //result += this.arguments.join(", ");
         result += ")";
         return result;
     }

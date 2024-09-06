@@ -1,5 +1,7 @@
 package org.restudios.relang.parser.ast.types.nodes.statements;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
 import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
@@ -26,6 +28,18 @@ public class ForiStatement extends Statement {
         this.step = step;
         this.body = body;
     }
+
+    @Override
+    public void analyze(AnalyzerContext context) {
+        AnalyzerContext nc = context.create();
+        initialization.analyze(nc);
+        Primitives type = initValue.predictType(nc).primitive;
+        if(type != Primitives.INTEGER && type != Primitives.FLOAT) throw new AnalyzerError("Value need to be integer or float", initValue.token);
+        if(maxValue.predictType(nc).primitive != type) throw new AnalyzerError("Incorrect types", maxValue.token);
+        if(step.predictType(nc).primitive != type) throw new AnalyzerError("Incorrect types", step.token);
+        body.analyze(nc);
+    }
+
     @Override
     public void execute(Context context) {
         Context sub = new Context(context);

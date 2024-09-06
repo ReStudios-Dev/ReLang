@@ -1,15 +1,17 @@
 package org.restudios.relang.parser.ast.types.values;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
 import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.Visibility;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.values.values.*;
+import org.restudios.relang.parser.ast.types.values.values.sll.classes.RLRunnable;
 import org.restudios.relang.parser.ast.types.values.values.sll.dynamic.DynamicSLLClass;
 import org.restudios.relang.parser.exceptions.RLException;
+import org.restudios.relang.parser.utils.NativeMethod;
+import org.restudios.relang.parser.utils.NativeMethodBuilder;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ClassInstance implements Instance {
@@ -18,6 +20,7 @@ public class ClassInstance implements Instance {
 
     private final ArrayList<FunctionMethod> methods = new ArrayList<>();
     private final ArrayList<CustomTypeValue> subTypes = new ArrayList<>();
+    private final Map<String, Object> cache = new HashMap<>();
 
     public ClassInstance(String sll, List<Type> types, Context parent){
         this.clazz = parent.getClass(sll);
@@ -138,17 +141,39 @@ public class ClassInstance implements Instance {
                 '}';
     }
 
+    public ArrayList<FunctionMethod> getAllMethods(boolean includeThis, boolean implementedOnly, boolean allowStatic){
+        ArrayList<FunctionMethod> fms = getRLClass().getAllMethods(includeThis, implementedOnly, allowStatic);
+        ArrayList<FunctionMethod> toRemove = new ArrayList<>();
+        for (FunctionMethod method : methods) {
+            for (FunctionMethod fm : fms) {
+                if(method.checkForArguments(fm)){
+                    toRemove.add(fm);
+                }
+            }
+        }
+        for (FunctionMethod functionMethod : toRemove) {
+            fms.remove(functionMethod);
+        }
+        fms.addAll(methods);
+        return fms;
+    }
+
     public FunctionMethod findMethodFromNameAndArguments(Context context, String name, Value... values) {
-        return findMethodFromNameAndArguments(name, values, getRLClass().getAllMethods(true, true, false), context, this);
+        return findMethodFromNameAndArguments(name, values, getAllMethods(true, true, false), context, this);
     }
     public static FunctionMethod findMethodFromNameAndArguments(String name, Value[] values, ArrayList<FunctionMethod> methods, Context context, ClassInstance instance) {
         ArrayList<Type> types = Arrays.stream(values).map(value -> value.finalExpression().type()).collect(Collectors.toCollection(ArrayList::new));
         lst:for (FunctionMethod method : methods) {
             if(method.name.equals(name)) {
-                if (method.getArgumentTypes().size()==types.size()) {
+                if (method.getArgumentTypes().size()==types.size() || method.getArguments().get(method.getArguments().size()-1).isVarArg()) {
+                    List<Type> argumentTypes = method.getArgumentTypes();
+                    boolean varArg = !method.getArguments().isEmpty() && method.getArguments().get(method.getArguments().size() - 1).varArg;
+                    Type varArgType = varArg ? argumentTypes.get(argumentTypes.size()-1) : null;
+                    int from = argumentTypes.size() - 1;
                     for (int i = 0; i < types.size(); i++) {
+                        boolean mustBeVarArg = varArg && i >= from;
                         Type in = types.get(i);
-                        Type out = method.getArgumentTypes().get(i);
+                        Type out = mustBeVarArg ? varArgType : method.getArgumentTypes().get(i);
                         if(instance != null)out.init(instance.context);
                         else out.init(context);
                         if(out.primitive != Primitives.NULL && !in.canBe(out)) {
@@ -156,6 +181,34 @@ public class ClassInstance implements Instance {
                         }
                     }
                     return method;
+                }
+            }
+        }
+        return null;
+    }
+    public static Type findMethodFromNameAndArguments(String name, List<Type> types, ArrayList<FunctionMethod> methods, Type inherit, AnalyzerContext context) {
+        lst:for (FunctionMethod method : methods) {
+            if(method.name.equals(name)) {
+                if (method.getArgumentTypes().size()==types.size() || method.getArguments().get(method.getArguments().size()-1).isVarArg()) {
+                    List<Type> argumentTypes = method.getArgumentTypes();
+                    boolean varArg = !method.getArguments().isEmpty() && method.getArguments().get(method.getArguments().size() - 1).varArg;
+                    Type varArgType = varArg ? argumentTypes.get(argumentTypes.size()-1) : null;
+                    int from = argumentTypes.size() - 1;
+                    for (int i = 0; i < types.size(); i++) {
+                        boolean mustBeVarArg = varArg && i >= from;
+                        Type in = types.get(i);
+                        Type out = mustBeVarArg ? varArgType : method.getArgumentTypes().get(i);
+                        if(inherit != null){
+                            out.initClassOrType(context, inherit);
+                        }else{
+                            out.initClassOrType(context);
+                        }
+                        in.initClassOrType(context);
+                        if(out.primitive != Primitives.NULL && !in.canBe(out)) {
+                            continue  lst;
+                        }
+                    }
+                    return method.getReturnType();
                 }
             }
         }
@@ -191,5 +244,23 @@ public class ClassInstance implements Instance {
 
     public Variable getVariable(String name) {
         return getContext().getVariable(name);
+    }
+
+    public Map<String, Object> getCache(){
+        return cache;
+    }
+
+    @Override
+    public Object convertNative() {
+        return this;
+    }
+
+    public boolean isRunnable() {
+        return this instanceof RLRunnable;
+    }
+
+    public void implementMethod(FunctionMethod original, FunctionMethod m) {
+        while (methods.contains(original)) methods.remove(original);
+        methods.add(m);
     }
 }

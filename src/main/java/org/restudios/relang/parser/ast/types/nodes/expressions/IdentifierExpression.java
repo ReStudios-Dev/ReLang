@@ -1,10 +1,11 @@
 package org.restudios.relang.parser.ast.types.nodes.expressions;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Type;
-import org.restudios.relang.parser.ast.types.values.ClassInstance;
-import org.restudios.relang.parser.ast.types.values.RLEnumClass;
-import org.restudios.relang.parser.ast.types.values.Context;
+import org.restudios.relang.parser.ast.types.nodes.statements.ClassDeclarationStatement;
+import org.restudios.relang.parser.ast.types.values.*;
 import org.restudios.relang.parser.ast.types.values.values.CustomTypeValue;
 import org.restudios.relang.parser.ast.types.values.values.EnumItemValue;
 import org.restudios.relang.parser.ast.types.values.values.TypeValue;
@@ -27,6 +28,35 @@ public class IdentifierExpression extends Expression {
     public Value eval(Context context) {
         return find(context, true);
     }
+
+    @Override
+    public Type predictType(AnalyzerContext context) {
+        Type t = context.getVariable(value);
+        if(t != null){
+            t.initClassOrType(context);
+            return t;
+        }
+        RLClass cds = context.getClass(value);
+        if(cds != null){
+            return cds.type();
+        }
+        if(context.getHandlingClass() != null){
+            for (UnInitializedVariable unInitializedVariable : context.getHandlingClass().getVariables()) {
+                if(unInitializedVariable.getName().equals(value)) {
+                    t = unInitializedVariable.getType();
+                    t.initClassOrType(context);
+                    return t;
+                }
+            }
+            for (CustomTypeValue subType : context.getHandlingClass().getSubTypes()) {
+                if(subType.name.equals(value)){
+                    return new TypeValue(subType.name, subType.value).type();
+                }
+            }
+        }
+        throw new AnalyzerError("Method, class or variable named \""+value+"\" not found", token);
+    }
+
     public Value find(Context context, boolean includeVariables){
         if(includeVariables && context.containsVariable(value)){
             return context.getVariable(value);
@@ -38,7 +68,7 @@ public class IdentifierExpression extends Expression {
         if(ci != null){
             for (CustomTypeValue subType : ci.getSubTypes()) {
                 if(subType.name.equals(value)){
-                    return new TypeValue(subType.value);
+                    return new TypeValue(subType.name, subType.value);
                 }
             }
         }
@@ -52,5 +82,10 @@ public class IdentifierExpression extends Expression {
 
     public Value fromClassInstance(ClassInstance l) {
         return eval(l.getContext());
+    }
+
+    @Override
+    public String toString() {
+        return value;
     }
 }

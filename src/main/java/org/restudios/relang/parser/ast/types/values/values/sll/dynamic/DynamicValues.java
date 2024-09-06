@@ -220,6 +220,7 @@ public class DynamicValues {
                 .intArgument("length")
                 .setStrHandler((arguments, context,callContext,instance) -> {
                     RLStr string = (RLStr) instance;
+                    if(string.value.isEmpty()) return string.value;
                     return string.value.substring(arguments.getInt("fromIndex"), arguments.getInt("length"));
                 })
                 .buildSLL(ci));

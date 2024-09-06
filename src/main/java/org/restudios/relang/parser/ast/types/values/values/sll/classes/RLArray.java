@@ -11,6 +11,7 @@ import org.restudios.relang.parser.exceptions.RLException;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 public class RLArray extends SLLClassInstance {
@@ -67,4 +68,13 @@ public class RLArray extends SLLClassInstance {
     }
 
 
+    @Override
+    public Object convertNative() {
+        List<Object> result = new ArrayList<>();
+        for (Variable value : this.values) {
+            Object v = value.absoluteValue().finalExpression().convertNative();
+            result.add(v);
+        }
+        return result;
+    }
 }

@@ -1,5 +1,8 @@
 package org.restudios.relang.parser.ast.types.nodes.statements;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
+import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 import org.restudios.relang.parser.ast.types.nodes.Type;
@@ -16,6 +19,11 @@ public class ExitStatement extends Statement {
     public ExitStatement(Token token, Expression code) {
         super(token);
         this.code = code;
+    }
+
+    @Override
+    public void analyze(AnalyzerContext context) {
+        if(code.predictType(context).primitive != Primitives.INTEGER) throw new AnalyzerError("Exit statement receives integer value only", code.token);
     }
 
     @Override

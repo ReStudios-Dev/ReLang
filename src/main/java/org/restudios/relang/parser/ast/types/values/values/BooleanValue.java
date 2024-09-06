@@ -53,6 +53,11 @@ public class BooleanValue implements Value{
     }
 
     @Override
+    public Object convertNative() {
+        return value;
+    }
+
+    @Override
     public String stringValue() {
         return value ? "true" : "false";
     }

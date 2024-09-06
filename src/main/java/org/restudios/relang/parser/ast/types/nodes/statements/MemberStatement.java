@@ -1,18 +1,21 @@
 package org.restudios.relang.parser.ast.types.nodes.statements;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
+import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.nodes.expressions.IdentifierExpression;
-import org.restudios.relang.parser.ast.types.values.ClassInstance;
-import org.restudios.relang.parser.ast.types.values.RLClass;
-import org.restudios.relang.parser.ast.types.values.RLEnumClass;
-import org.restudios.relang.parser.ast.types.values.Context;
+import org.restudios.relang.parser.ast.types.values.*;
 import org.restudios.relang.parser.ast.types.values.values.EnumItemValue;
 import org.restudios.relang.parser.ast.types.values.values.NullValue;
 import org.restudios.relang.parser.ast.types.values.values.Value;
 import org.restudios.relang.parser.exceptions.RLException;
 import org.restudios.relang.parser.tokens.Token;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MemberStatement extends Statement  {
     public final Expression left;
@@ -22,6 +25,41 @@ public class MemberStatement extends Statement  {
         super(token);
         this.left = left;
         this.right = right;
+    }
+
+    @Override
+    public void analyze(AnalyzerContext context) {
+        predictType(context);
+    }
+
+    @Override
+    public Type predictType(AnalyzerContext c) {
+        Type l = left.predictType(c);
+        l.initClassOrType(c);
+        if(l.primitive == Primitives.NULL || l.primitive == Primitives.VOID){
+            throw new AnalyzerError("null value", left.token);
+        }
+        if(!l.isCustomType()){
+            throw new AnalyzerError("Cannot access non class", left.token);
+        }
+        if(right instanceof MethodCallStatement) {
+            MethodCallStatement mcs = (MethodCallStatement) right;
+            List<Expression> arguments = mcs.arguments;
+            List<Type> types = new ArrayList<>();
+            for (Expression argument : arguments) {
+                types.add(argument.predictType(c));
+            }
+            Type t = ClassInstance.findMethodFromNameAndArguments(mcs.method.token.string, types, l.clazz.getAllMethodsOriginal(true, false, true), l, c);
+            if(t != null) return t;
+            throw new AnalyzerError("Method "+mcs.method.token.string+" not found", mcs.method.token);
+        }
+        IdentifierExpression variable = (IdentifierExpression) right;
+        for (UnInitializedVariable clazzVariable : l.clazz.getVariables()) {
+            if(clazzVariable.getName().equals(variable.value)){
+                return clazzVariable.getType();
+            }
+        }
+        return super.predictType(c);
     }
 
     @Override

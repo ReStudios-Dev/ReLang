@@ -14,7 +14,7 @@ public class CastOperatorOverloadFunctionMethod extends FunctionMethod {
     public final boolean implicit;
 
     public CastOperatorOverloadFunctionMethod(List<CustomTypeValue> customTypes, BlockStatement code, FunctionArgument from, Type to, boolean implicit) {
-        super(customTypes, Collections.singletonList(from), to, implicit?"implicit":"explicit", new ArrayList<>(), code, false, false);
+        super(customTypes, Collections.singletonList(from), to, implicit?"implicit":"explicit", new ArrayList<>(), code, false, false, new ArrayList<>());
         this.from = from;
         this.to = to;
         this.implicit = implicit;

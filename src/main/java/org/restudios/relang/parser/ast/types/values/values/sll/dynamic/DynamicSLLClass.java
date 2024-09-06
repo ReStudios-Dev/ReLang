@@ -77,6 +77,7 @@ public class DynamicSLLClass extends RLClass {
         createdChild(ci);
         callConstructor(context, ci.getContext(), constructorArguments);
         init();
+        context.getModuleRegistry().forEach(module -> module.onClassInstantiate(ci, context, constructorArguments));
         return ci;
     }
 

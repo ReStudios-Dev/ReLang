@@ -1,5 +1,6 @@
 package org.restudios.relang.parser.ast;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
 import org.restudios.relang.parser.ast.types.ClassType;
 import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.TBoolean;
@@ -8,13 +9,7 @@ import org.restudios.relang.parser.ast.types.Visibility;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 import org.restudios.relang.parser.ast.types.nodes.Type;
-import org.restudios.relang.parser.ast.types.nodes.expressions.BinaryExpression;
-import org.restudios.relang.parser.ast.types.nodes.expressions.CastExpression;
-import org.restudios.relang.parser.ast.types.nodes.expressions.GroupingExpression;
-import org.restudios.relang.parser.ast.types.nodes.expressions.IdentifierExpression;
-import org.restudios.relang.parser.ast.types.nodes.expressions.LambdaExpression;
-import org.restudios.relang.parser.ast.types.nodes.expressions.ListExpression;
-import org.restudios.relang.parser.ast.types.nodes.expressions.LogicalExpression;
+import org.restudios.relang.parser.ast.types.nodes.expressions.*;
 import org.restudios.relang.parser.ast.types.nodes.expressions.implicit.UnaryImplicitExpression;
 import org.restudios.relang.parser.ast.types.nodes.expressions.literals.BooleanExpression;
 import org.restudios.relang.parser.ast.types.nodes.expressions.literals.NullExpression;
@@ -348,7 +343,7 @@ public class ASTGenerator {
                 thr(dec.getToken(), "Interfaces cannot include a constructor");
             }
             if (dec instanceof MethodDeclarationStatement) {
-                if (!((MethodDeclarationStatement) dec).isAbstract) {
+                if (!((MethodDeclarationStatement) dec).isAbstract && !((MethodDeclarationStatement) dec).isNative) {
                     thr(dec.getToken(), "Interfaces cannot include non abstract methods");
                 }
             }
@@ -564,6 +559,8 @@ public class ASTGenerator {
     }
 
     private MethodDeclarationStatement parseMethodDeclaration() {
+        List<AnnotationDefinition> annotations = annotationDefinitions();
+
         boolean isNative = match(TokenType.NATIVE);
 
         Token pf = peek();
@@ -612,9 +609,9 @@ public class ASTGenerator {
             if (isAbstract) {
                 unexpected(at, "Constructor cannot be abstract");
             }
-            return new ConstructorDeclarationStatement(pf, name.getString(), null, vis, args, code, callSuper);
+            return new ConstructorDeclarationStatement(pf, name.getString(), null, vis, args, code, callSuper, isNative, annotations);
         }
-        return new MethodDeclarationStatement(pf, name.getString(), returnType, vis, args, code, isAbstract, isNative);
+        return new MethodDeclarationStatement(pf, name.getString(), returnType, vis, args, code, isAbstract, isNative, annotations);
     }
 
     private List<Expression> parseSuper(){
@@ -695,6 +692,14 @@ public class ASTGenerator {
                 }
             }
         }
+        for (int i = 0; i < expressions.size(); i++) {
+            boolean last = expressions.size() - 1 == i;
+            VariableDeclarationStatement vds = expressions.get(i);
+            if(!last && vds.varArgs){
+                if(nullOnError) return null;
+                unexpected(vds.token, "Varargs cannot be non last");
+            }
+        }
         if (previousSafe().getType() != TokenType.CLOSE_PARENTHESES) {
             if (nullOnError) return null;
             unexpected(peek(), "Close angle bracket");
@@ -711,13 +716,18 @@ public class ASTGenerator {
         PsiMarker marker = listener.mark();
         Type type = parseType(nullOnError);
         Token name = null;
+        boolean varargs = false;
+        if(match(TokenType.TRIPLE_DOT)){
+            varargs = true;
+        }
+
         if (!match(TokenType.IDENTIFIER)) {
             if (nullOnError) return null;
             unexpected(peek(), "Variable name");
         }else{
             name = previous();
         }
-        return marker.touch(new VariableDeclarationStatement(tf, type, name == null ? "" : name.getString(), new ArrayList<>(), null));
+        return marker.touch(new VariableDeclarationStatement(tf, type, varargs, name == null ? "" : name.getString(), new ArrayList<>(), null));
     }
 
     private MethodCallStatement parseMethodCall() {
@@ -785,6 +795,7 @@ public class ASTGenerator {
 
     public boolean nextMethod(){
         int initialPosition = current;
+        annotationDefinitions();
         match(TokenType.NATIVE);
         parseVisibilities(true);
         if(match(TokenType.OVERRIDE)){
@@ -957,7 +968,7 @@ public class ASTGenerator {
         if (match(TokenType.EQUAL)) {
             value = parseExpression();
         }
-        return new VariableDeclarationStatement(tf, type, name == null ? "" : name.getString(), vis, value);
+        return new VariableDeclarationStatement(tf, type, false, name == null ? "" : name.getString(), vis, value);
     }
 
     private ArrayList<Type> parseCustomTypes(boolean nullOnError) {
@@ -1042,9 +1053,24 @@ public class ASTGenerator {
                 public Value eval(Context context) {
                     return Value.nullValue();
                 }
+
+                @Override
+                public Type predictType(AnalyzerContext c) {
+                    return Primitives.NULL.type();
+                }
             };
         }
-        return parseCasting();
+        return parseInstanceOf();
+    }
+    private Expression parseInstanceOf(){
+        Expression left = parseCasting();
+
+        if (match(TokenType.INSTANCEOF)) {
+            Expression right = parseMembers();
+            return new InstanceOfExpression(left.token, left, right);
+        }
+
+        return left;
     }
 
     private Expression parseCasting() {
@@ -1057,6 +1083,11 @@ public class ASTGenerator {
                     @Override
                     public Value eval(Context context) {
                         return Value.nullValue();
+                    }
+
+                    @Override
+                    public Type predictType(AnalyzerContext c) {
+                        return Primitives.NULL.type();
                     }
                 };
             }

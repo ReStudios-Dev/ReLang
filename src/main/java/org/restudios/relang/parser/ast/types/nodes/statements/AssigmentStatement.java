@@ -1,11 +1,14 @@
 package org.restudios.relang.parser.ast.types.nodes.statements;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.nodes.expressions.BinaryExpression;
 import org.restudios.relang.parser.ast.types.nodes.expressions.CastExpression;
+import org.restudios.relang.parser.ast.types.values.FunctionMethod;
 import org.restudios.relang.parser.ast.types.values.Variable;
 import org.restudios.relang.parser.ast.types.values.Context;
 import org.restudios.relang.parser.ast.types.values.values.NullValue;
@@ -29,6 +32,14 @@ public class AssigmentStatement extends Statement {
         this.value = value;
     }
 
+    @Override
+    public void analyze(AnalyzerContext context) {
+        Type variable = key.predictType(context);
+        Type assign = value.predictType(context);
+        variable.initClassOrType(context);
+        assign.initClassOrType(context);
+        if(!assign.canBe(variable)) throw new AnalyzerError("Invalid assigment type", value.token);
+    }
 
     @Override
     public Value eval(Context context) {
@@ -61,6 +72,11 @@ public class AssigmentStatement extends Statement {
             variable.setValue(CastExpression.cast(variable.getType(), BinaryExpression.operate(context, variableToAssign.finalExpression(), binaryOperator, valueToAssign.finalExpression()), context), context);
         }
         return variable.absoluteValue();
+    }
+
+    @Override
+    public Type predictType(AnalyzerContext c) {
+        return value.predictType(c);
     }
 
     @Override

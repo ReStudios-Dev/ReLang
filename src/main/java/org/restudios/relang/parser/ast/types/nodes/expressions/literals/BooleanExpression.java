@@ -1,5 +1,8 @@
 package org.restudios.relang.parser.ast.types.nodes.expressions.literals;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.ast.types.Primitives;
+import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.nodes.expressions.LiteralExpression;
 import org.restudios.relang.parser.ast.types.values.Context;
 import org.restudios.relang.parser.ast.types.values.values.BooleanValue;
@@ -12,6 +15,11 @@ public class BooleanExpression extends LiteralExpression {
     public BooleanExpression(Token token, boolean value) {
         super(token);
         this.value = value;
+    }
+
+    @Override
+    public Type predictType(AnalyzerContext c) {
+        return Primitives.BOOL.type();
     }
 
     @Override

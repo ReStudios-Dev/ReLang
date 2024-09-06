@@ -5,11 +5,13 @@ import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.nodes.expressions.CastExpression;
 import org.restudios.relang.parser.ast.types.values.Context;
 import org.restudios.relang.parser.ast.types.values.Variable;
+import org.restudios.relang.parser.ast.types.values.values.sll.classes.RLArray;
 import org.restudios.relang.parser.ast.types.values.values.sll.classes.RLRunnable;
 import org.restudios.relang.parser.ast.types.values.values.sll.dynamic.DynamicSLLClass;
 import org.restudios.relang.parser.exceptions.RLException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public abstract class ReFunction {
@@ -57,12 +59,23 @@ public abstract class ReFunction {
         return execute(createdContext, callContext, arguments);
     }
     public Value execute(Context context, Context callContext, Value... values){
-        if(arguments.size() != values.length){
+        if(arguments.size() != values.length && (arguments.isEmpty() || !arguments.get(arguments.size() - 1).isVarArg())){
             throw new RLException("Method receiving "+arguments.size()+" arguments, but got "+values.length, Type.internal(context), context);
         }
-        Variable[] variables = new Variable[values.length];
+        Variable[] variables = new Variable[arguments.size()];
         for (int i = 0; i < arguments.size(); i++) {
             FunctionArgument fa = arguments.get(i);
+            if(fa.isVarArg()){
+                List<Value> vals = new ArrayList<>(Arrays.asList(values).subList(i, values.length));
+                Type arrayType = fa.type;
+                RLArray v = new RLArray(arrayType, context);
+                for (Value val : vals) {
+                    v.add(val);
+                }
+                Variable variable = new Variable(fa.type, fa.name, v, new ArrayList<>());
+                variables[i] = variable;
+                continue;
+            }
             Value val = CastExpression.cast(fa.type, values[i], context);
 
             Variable variable = new Variable(fa.type, fa.name, val, new ArrayList<>());
@@ -84,7 +97,7 @@ public abstract class ReFunction {
             }
         }
         if (!returned.type().canBe(returnType)){
-            throw new RLException("Returned incorrect type: " + returned.type().displayName(), Type.internal(context), callContext);
+            throw new RLException(this +" returned incorrect type: " + returned.type().displayName(), Type.internal(context), callContext);
 
         }
         return returned;

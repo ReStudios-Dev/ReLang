@@ -1,6 +1,10 @@
 package org.restudios.relang.parser.ast.types.nodes.extra;
 
 import org.restudios.relang.parser.ast.types.nodes.Expression;
+import org.restudios.relang.parser.ast.types.values.ClassInstance;
+import org.restudios.relang.parser.ast.types.values.Context;
+import org.restudios.relang.parser.ast.types.values.RLClass;
+import org.restudios.relang.parser.ast.types.values.values.Value;
 
 import java.util.List;
 
@@ -29,5 +33,19 @@ public class AnnotationDefinition {
         sb.append(", expressions=").append(expressions);
         sb.append('}');
         return sb.toString();
+    }
+
+    public LoadedAnnotation eval(Context context) {
+        Value v = getName().eval(context).finalExpression();
+        if(!(v instanceof RLClass)){
+            throw new RuntimeException("Annotation can be only regular class");
+        }
+        RLClass cl = (RLClass) v;
+        Value[] args = new Value[getExpressions().size()];
+        for (int i = 0; i < args.length; i++) {
+            args[i] = getExpressions().get(i).eval(context).finalExpression();
+        }
+        ClassInstance ci = cl.instantiate(context, args);
+        return new LoadedAnnotation(ci);
     }
 }

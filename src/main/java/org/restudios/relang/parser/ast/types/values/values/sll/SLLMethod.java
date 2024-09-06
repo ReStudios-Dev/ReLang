@@ -33,19 +33,19 @@ public class SLLMethod extends FunctionMethod {
     }
     @SuppressWarnings("unused")
     public SLLMethod(String name, boolean staticMethod, LinkedHashMap<String, Type> arguments, SLLMethodCall handler, ClassInstance clazz) {
-        this(name, staticMethod, arguments, handler, clazz.getRLClass().findRawMethod(name, arguments, clazz.getContext()));
+        this(name, staticMethod, arguments, handler, clazz.getRLClass().findRawMethod(name, arguments, false, clazz.getContext()));
     }
     public SLLMethod(String name, boolean staticMethod, LinkedHashMap<String, Type> arguments, SLLMethodCall handler, RLClass clazz, Context context) {
-        this(name, staticMethod, arguments, handler, clazz.findRawMethod(name, arguments, context));
+        this(name, staticMethod, arguments, handler, clazz.findRawMethod(name, arguments, false, context));
         this.context = context;
     }
     @SuppressWarnings("unused")
     public SLLMethod(String name, boolean staticMethod, Map.Entry<String, Type> argument, SLLMethodCall handler, RLClass clazz, Context context) {
-        this(name, staticMethod, argumentToMap(argument), handler, clazz.findRawMethod(name, argumentToMap(argument), context));
+        this(name, staticMethod, argumentToMap(argument), handler, clazz.findRawMethod(name, argumentToMap(argument), false, context));
         this.context = context;
     }
     public SLLMethod(String name, boolean staticMethod, SLLMethodCall handler, RLClass clazz, Context context) {
-        this(name, staticMethod, new LinkedHashMap<>(), handler, clazz.findRawMethod(name, new LinkedHashMap<>(), context));
+        this(name, staticMethod, new LinkedHashMap<>(), handler, clazz.findRawMethod(name, new LinkedHashMap<>(), false, context));
         this.context = context;
     }
     private static LinkedHashMap<String, Type> argumentToMap(Map.Entry<String, Type> i){
@@ -93,22 +93,24 @@ public class SLLMethod extends FunctionMethod {
         FunctionMethod functionMethod = (FunctionMethod) obj;
         getReturnType().init(context);
         functionMethod.getReturnType().init(context);
-
-        if(getReturnType().token.string.equals(functionMethod.getReturnType().token.string)
-                || getReturnType().canBe(functionMethod.getReturnType())){
-            if (functionMethod.name.equals(getName())){
-                if(functionMethod.visibility.equals(visibility)){
-                    List<FunctionArgument> fa2 = functionMethod.getArguments();
-                    if(fa1.size() == fa2.size()){
-                        for (int i = 0; i < fa1.size(); i++) {
-                            if(!fa1.get(i).type.like(fa2.get(i).type)){
-                                return false;
+        try {
+            if(getReturnType().canBe(functionMethod.getReturnType()) || getReturnType().token.string.equals(functionMethod.getReturnType().token.string)){
+                if (functionMethod.name.equals(getName())){
+                    if(functionMethod.visibility.equals(visibility)){
+                        List<FunctionArgument> fa2 = functionMethod.getArguments();
+                        if(fa1.size() == fa2.size()){
+                            for (int i = 0; i < fa1.size(); i++) {
+                                if(!fa1.get(i).type.like(fa2.get(i).type)){
+                                    return false;
+                                }
                             }
+                            return true;
                         }
-                        return true;
                     }
                 }
             }
+        }catch (NullPointerException ignored){
+            return false;
         }
         return false;
     }

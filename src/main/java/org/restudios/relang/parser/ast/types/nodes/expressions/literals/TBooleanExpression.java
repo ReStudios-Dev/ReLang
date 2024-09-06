@@ -1,6 +1,9 @@
 package org.restudios.relang.parser.ast.types.nodes.expressions.literals;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.TBoolean;
+import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.nodes.expressions.LiteralExpression;
 import org.restudios.relang.parser.ast.types.values.Context;
 import org.restudios.relang.parser.ast.types.values.values.TBooleanValue;
@@ -13,6 +16,11 @@ public class TBooleanExpression extends LiteralExpression {
     public TBooleanExpression(Token token, TBoolean value) {
         super(token);
         this.value = value;
+    }
+
+    @Override
+    public Type predictType(AnalyzerContext context) {
+        return Primitives.TBOOL.type();
     }
 
     @Override

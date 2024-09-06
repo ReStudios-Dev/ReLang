@@ -1,12 +1,16 @@
 package org.restudios.relang.parser.ast.types.nodes.expressions;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
 import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 import org.restudios.relang.parser.ast.types.nodes.Type;
+import org.restudios.relang.parser.ast.types.nodes.statements.MemberStatement;
 import org.restudios.relang.parser.ast.types.values.ClassInstance;
 import org.restudios.relang.parser.ast.types.values.FunctionMethod;
 import org.restudios.relang.parser.ast.types.values.Context;
+import org.restudios.relang.parser.ast.types.values.RLClass;
 import org.restudios.relang.parser.ast.types.values.values.FloatValue;
 import org.restudios.relang.parser.ast.types.values.values.IntegerValue;
 import org.restudios.relang.parser.ast.types.values.values.Value;
@@ -28,8 +32,79 @@ public class BinaryExpression extends Statement {
         this.right = right;
     }
 
-    public static Value operate(Context context, Value l, String operator, Value r) {
+    @Override
+    public Type predictType(AnalyzerContext c) {
+        Type l = left.predictType(c);
+        Type r = right.predictType(c);
+        l.initClassOrType(c);
+        r.initClassOrType(c);
+        if(l.isCustomType() && r.isCustomType()){
+            RLClass li = l.clazz;
+            RLClass ri = r.clazz;
+            if(li.equals(ri)){
+                FunctionMethod fm = li.findBinaryOperator(operator, li, li);
+                if(fm != null){
+                    return fm.getReturnType();
+                }
+            }else{
+                FunctionMethod fm = li.findBinaryOperator(operator, li, ri);
+                FunctionMethod fm2 = ri.findBinaryOperator(operator, li, ri);
+                if(fm != null){
+                    return fm.getReturnType();
+                }
+                if(fm2 != null){
+                    return fm2.getReturnType();
+                }
+            }
+        }else if(l.isCustomType()){
+            RLClass li = l.clazz;
+            FunctionMethod fm = li.findBinaryOperator(operator, Type.clazz(li), r);
+            if(fm != null){
+                return fm.getReturnType();
+            }
+        }else if(r.isCustomType()){
+            RLClass ri = r.clazz;
+            FunctionMethod fm = ri.getRLClass().findBinaryOperator(operator, l, Type.clazz(ri));
+            if(fm != null){
+                return fm.getReturnType();
+            }
+        }
+        if(operator.equals("+")){
+            if(l.isString()) return l.clazz.type();
+            if(r.isString()) return r.clazz.type();
+        }
+        switch (operator) {
+            case "+":
+            case "-":
+            case ">>":
+            case ">>>":
+            case "<<":
+            case "^":
+            case "&":
+            case "|":
+            case "%":
+            case "**":
+            case "/":
+            case "*":
+                if(l.primitive == Primitives.INTEGER) {
+                    if(r.primitive == Primitives.FLOAT || r.primitive == Primitives.INTEGER) return r.primitive.type();
+                }
+                if(l.primitive == Primitives.FLOAT) {
+                    if(r.primitive == Primitives.FLOAT || r.primitive == Primitives.INTEGER) return Primitives.FLOAT.type();
+                }
+                throw new AnalyzerError("Invalid binary operation", token);
+        }
+        throw new AnalyzerError("Unsupported operation", token);
+    }
 
+    @Override
+    public void analyze(AnalyzerContext context) {
+        predictType(context);
+    }
+
+    public static Value operate(Context context, Value l, String operator, Value r) {
+        l = l.finalExpression();
+        r = r.finalExpression();
         if(l instanceof ClassInstance && r instanceof ClassInstance){
             ClassInstance li = (ClassInstance) l;
             ClassInstance ri = (ClassInstance) r;
@@ -399,11 +474,11 @@ public class BinaryExpression extends Statement {
                     case INTEGER:
                     case CHAR:
                         int rightInt = r.intValue();
-                        if(rightInt == 0)throw new RLException("Cannot divide by zero", Type.internal(context), context);
+                        if(rightInt == 0)throw new RLException("Division by zero", Type.internal(context), context);
                         return new IntegerValue(leftInt / rightInt);
                     case FLOAT:
                         double rightFloat = r.floatValue();
-                        if(rightFloat == 0)throw new RLException("Cannot divide by zero", Type.internal(context), context);
+                        if(rightFloat == 0)throw new RLException("Division by zero", Type.internal(context), context);
                         return new FloatValue((double) leftInt / rightFloat);
                     default:
                         throw new RLException("Unsupported operation", Type.internal(context), context);
@@ -414,11 +489,11 @@ public class BinaryExpression extends Statement {
                     case INTEGER:
                     case CHAR:
                         int rightInt = r.intValue();
-                        if(rightInt == 0)throw new RLException("Cannot divide by zero", Type.internal(context), context);
+                        if(rightInt == 0)throw new RLException("Division by zero", Type.internal(context), context);
                         return new IntegerValue((int)leftFloat / rightInt);
                     case FLOAT:
                         double rightFloat = r.floatValue();
-                        if(rightFloat == 0)throw new RLException("Cannot divide by zero", Type.internal(context), context);
+                        if(rightFloat == 0)throw new RLException("Division by zero", Type.internal(context), context);
                         return new FloatValue( leftFloat / rightFloat);
                     default:
                         throw new RLException("Unsupported operation", Type.internal(context), context);
@@ -431,7 +506,7 @@ public class BinaryExpression extends Statement {
 
         Type left = l.type();
         Type right = r.type();
-        if(left.clazz.getName().equals(DynamicSLLClass.STRING)){
+        if(left.clazz != null && left.clazz.getName().equals(DynamicSLLClass.STRING)){
             if(right.primitive == Primitives.INTEGER){
                 StringBuilder s = new StringBuilder();
                 for (int i = 0; i < r.intValue(); i++) {

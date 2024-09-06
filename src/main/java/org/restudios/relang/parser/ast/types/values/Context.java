@@ -1,5 +1,7 @@
 package org.restudios.relang.parser.ast.types.values;
 
+import org.restudios.relang.modules.ModuleRegistry;
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.values.values.EnumItemValue;
@@ -29,6 +31,8 @@ public class Context {
     private RLStackTrace trace = new RLStackTrace();
     private boolean inConstructor;
     private String currentMethod;
+    private ModuleRegistry moduleRegistry;
+    private RLClass staticCall;
 
     public Context(Context parent){
         this.parent = parent;
@@ -43,10 +47,19 @@ public class Context {
             trace = parent.trace.duplicate();
             threadManager = parent.threadManager;
             currentMethod = parent.currentMethod;
+            this.moduleRegistry = parent.moduleRegistry;
+            staticCall = parent.staticCall;
         }else{
             threadManager = new UnsupportedThreadManager();
+            this.moduleRegistry = new ModuleRegistry();
             currentMethod = "<root>";
+            staticCall = null;
         }
+    }
+
+
+    public ModuleRegistry getModuleRegistry() {
+        return moduleRegistry;
     }
 
     public boolean isInConstructor() {
@@ -301,5 +314,15 @@ public class Context {
 
     public void setTrace(RLStackTrace trace) {
         this.trace = trace;
+    }
+
+    public RLClass setStaticCall(RLClass clazz) {
+        RLClass bef = this.staticCall;
+        this.staticCall = clazz;
+        return bef;
+    }
+
+    public RLClass getStaticCall() {
+        return staticCall;
     }
 }

@@ -1,12 +1,11 @@
 package org.restudios.relang.parser.ast.types.nodes;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
 import org.restudios.relang.parser.ast.types.Node;
 import org.restudios.relang.parser.ast.types.Primitives;
+import org.restudios.relang.parser.ast.types.nodes.expressions.CastExpression;
 import org.restudios.relang.parser.ast.types.nodes.expressions.IdentifierExpression;
-import org.restudios.relang.parser.ast.types.values.ClassInstance;
-import org.restudios.relang.parser.ast.types.values.RLClass;
-import org.restudios.relang.parser.ast.types.values.Variable;
-import org.restudios.relang.parser.ast.types.values.Context;
+import org.restudios.relang.parser.ast.types.values.*;
 import org.restudios.relang.parser.ast.types.values.values.CustomTypeValue;
 import org.restudios.relang.parser.ast.types.values.values.NullValue;
 import org.restudios.relang.parser.ast.types.values.values.TypeValue;
@@ -55,7 +54,7 @@ public class Type extends Node {
     }
 
     public boolean isCustomType() {
-        return !isPrimitive;
+        return !isPrimitive || primitive == Primitives.TYPE;
     }
     public Type(Token token, ArrayList<Type> subTypes, Expression type) {
         this(token, subTypes);
@@ -98,6 +97,9 @@ public class Type extends Node {
     public static Type internal(Context context){
         return clazz("InternalException", context);
     }
+    public static Type illegalArgument(Context context){
+        return clazz("IllegalArgumentException", context);
+    }
     public static Type primitive(Primitives primitives){
         return new Type(null, primitives);
     }
@@ -109,6 +111,22 @@ public class Type extends Node {
     }
 
     public boolean canBe(Type type){
+        if(type.clazz != null && type.clazz.getName().equals(DynamicSLLClass.OBJECT)) return true;
+
+        if(isRunnable()){
+            if(type.clazz != null){
+                if(type.clazz.isInterface()){
+                    if(type.clazz.getAbstractMethods().size() == 1){
+
+                        //FunctionMethod fm = type.clazz.getAbstractMethods().get(0);
+                        // TODO 06.09.2024 14:34 Check lambda
+                        return true;
+
+                    }
+                }
+            }
+        }
+
         if(isPrimitive){
             if(primitive == Primitives.NULL){
                 return true;
@@ -260,6 +278,54 @@ public class Type extends Node {
             }
         }
     }
+    public void initClassOrType(AnalyzerContext context) {
+        if((primitive == Primitives.NULL || primitive == null) && clazz == null){
+            if(token != null && context.containsClass(token.string)){
+                clazz = context.getClass(token.string);
+                type = new IdentifierExpression(token, token.string);
+                isPrimitive = false;
+                primitive = null;
+            }else{
+                RLClass ci = context.handlingClass;
+                if(ci != null){
+                    for (CustomTypeValue subType : ci.getSubTypes()) {
+                        if(token == null) continue;
+                        if(subType.name.equals(token.string)){
+                            clazz = subType.value.clazz;
+                            type = subType.value.type;
+                            isPrimitive = true;
+                            primitive = Primitives.TYPE;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    public void initClassOrType(AnalyzerContext context, Type handling) {
+        if((primitive == Primitives.NULL || primitive == null) && clazz == null){
+            if(token != null && context.containsClass(token.string)){
+                clazz = context.getClass(token.string);
+                type = new IdentifierExpression(token, token.string);
+                isPrimitive = false;
+                primitive = null;
+            }else {
+                Type ci = handling;
+                for (int i = 0; i < ci.clazz.getSubTypes().size(); i++) {
+                    if (token == null) continue;
+                    String name = ci.clazz.getSubTypes().get(i).getName();
+                    Type value = handling.subTypes.get(i);
+
+                    if (name.equals(token.string)) {
+                        clazz = value.clazz;
+                        type = value.type;
+                        isPrimitive = true;
+                        primitive = Primitives.TYPE;
+                    }
+                }
+
+            }
+        }
+    }
 
     public Value getReflectionClass(Context context) {
         init(context);
@@ -300,5 +366,9 @@ public class Type extends Node {
 
     public boolean isRunnable() {
         return this.clazz != null && this.clazz.getName().equals(DynamicSLLClass.RUNNABLE);
+    }
+
+    public boolean isString() {
+        return this.isCustomType() && this.clazz.getName().equals(DynamicSLLClass.STRING);
     }
 }

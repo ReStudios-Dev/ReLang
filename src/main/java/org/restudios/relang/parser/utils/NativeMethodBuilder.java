@@ -16,8 +16,15 @@ public class NativeMethodBuilder {
     private final Context context;
     private String name;
     private boolean isStatic = false;
+    private boolean hasVarargs = false;
     private LinkedHashMap<String, Type> arguments = new LinkedHashMap<>();
     private NativeMethod.NativeMethodExecution handler = (arguments1, context, callContext, clazz) -> null;
+    private boolean isConstructor = false;
+
+    public NativeMethodBuilder(Context context){
+        this(context, "");
+        setConstructor(true);
+    }
 
     public NativeMethodBuilder(Context context, String name) {
         if(!context.containsClass(DynamicSLLClass.OBJECT)){
@@ -35,6 +42,15 @@ public class NativeMethodBuilder {
         this.name = name;
     }
 
+    public boolean isConstructor() {
+        return isConstructor;
+    }
+
+    public NativeMethodBuilder setConstructor(boolean constructor) {
+        isConstructor = constructor;
+        return this;
+    }
+
     public NativeMethodBuilder setName(String name) {
         this.name = name;
         return this;
@@ -49,7 +65,11 @@ public class NativeMethodBuilder {
         return arg(name, Primitives.NULL.type());
     }
     public NativeMethodBuilder arg(String name, Type type){
+        return arg(name, type, false);
+    }
+    public NativeMethodBuilder arg(String name, Type type, boolean varArgs){
         arguments.put(name, type);
+        hasVarargs = varArgs || hasVarargs;
         return this;
     }
     public NativeMethodBuilder stringArgument(String name){
@@ -72,6 +92,9 @@ public class NativeMethodBuilder {
     }
     public NativeMethodBuilder objectArgument(String name){
         return arg(name, Type.clazz(DynamicSLLClass.OBJECT, context));
+    }
+    public NativeMethodBuilder varArg(String args) {
+        return arg(args, Type.clazz(DynamicSLLClass.OBJECT, context), true);
     }
     public NativeMethodBuilder classArgument(String name, String className){
         return arg(name, Type.clazz(className, context));
@@ -117,7 +140,7 @@ public class NativeMethodBuilder {
 
 
     public NativeMethod build(){
-        return new NativeMethod(this.name, this.isStatic, this.arguments, this.handler);
+        return new NativeMethod(this.name, this.isStatic, this.isConstructor, this.arguments, hasVarargs, this.handler);
     }
     public SLLMethod buildSLL(String clazz, Context context) {
         return new SLLMethod(this.name, this.isStatic, this.arguments, (arguments, context1, callContext, clazz1) -> handler.apply(arguments, context1, callContext, clazz1), context.getClass(clazz), context);

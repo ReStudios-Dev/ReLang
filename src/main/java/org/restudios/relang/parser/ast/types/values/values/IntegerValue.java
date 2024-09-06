@@ -48,6 +48,11 @@ public class IntegerValue implements Value{
     }
 
     @Override
+    public Object convertNative() {
+        return value;
+    }
+
+    @Override
     public String toString() {
         return String.valueOf(value);
     }

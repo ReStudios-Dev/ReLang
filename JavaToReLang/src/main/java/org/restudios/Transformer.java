@@ -2,12 +2,14 @@ package org.restudios;
 
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
+import com.github.javaparser.ast.nodeTypes.modifiers.NodeWithAbstractModifier;
 import com.github.javaparser.ast.nodeTypes.modifiers.NodeWithAccessModifiers;
 import com.github.javaparser.ast.nodeTypes.modifiers.NodeWithFinalModifier;
 import com.github.javaparser.ast.nodeTypes.modifiers.NodeWithStaticModifier;
 import com.github.javaparser.ast.type.PrimitiveType;
 import com.github.javaparser.ast.type.Type;
 
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +18,7 @@ import java.util.Map;
 public class Transformer {
     public static Map<PrimitiveType.Primitive, String> primitiveMap = new HashMap<>();
     public static Map<String, String> classesMap = new HashMap<>();
+    public static List<String> noParametersList = new ArrayList<>();
     static  {
         primitiveMap.put(PrimitiveType.Primitive.BOOLEAN, "bool");
         primitiveMap.put(PrimitiveType.Primitive.BYTE, "int");
@@ -31,8 +34,45 @@ public class Transformer {
         classesMap.put("HashMap", "Map");
         classesMap.put("ArrayList", "array");
         classesMap.put("List", "array");
+        classesMap.put("boolean", "bool");
+        classesMap.put("byte", "int");
+        classesMap.put("int", "int");
+        classesMap.put("char", "char");
+        classesMap.put("double", "float");
+        classesMap.put("float", "float");
+        classesMap.put("long", "int");
+        classesMap.put("short", "int");
+
+        noParametersList.add("Class");
     }
 
+    public static String type(java.lang.reflect.Type type){
+        if(type instanceof ParameterizedType pt){
+            String name = ((Class<?>) pt.getRawType()).getSimpleName();
+            if(classesMap.containsKey(name)) name = classesMap.get(name);
+            List<String> subs = new ArrayList<>();
+            if(!noParametersList.contains(name)) for (java.lang.reflect.Type type1 : pt.getActualTypeArguments()) {
+                subs.add(type(type1));
+            }
+            return name + (!subs.isEmpty() ? "<"+String.join(", ", subs)+">" : "");
+        }
+        if(type instanceof Class<?> c){
+            String name = c.getSimpleName();
+            if(classesMap.containsKey(name)) name = classesMap.get(name);
+            List<String> subs = new ArrayList<>();
+            if(!noParametersList.contains(name)) for (java.lang.reflect.Type type1 : c.getTypeParameters()) {
+                subs.add("obj");
+            }
+            return name + (!subs.isEmpty() ? "<"+String.join(", ", subs)+">" : "");
+        }
+        if(type instanceof TypeVariable<?> t){
+            return t.getName();
+        }
+        if(type instanceof WildcardType t){
+            return "/* Wildcard "+ t +" */ obj";
+        }
+        throw new RuntimeException("Unsupported type: "+type);
+    }
     public static String type(Type type){
 
         if(type.isPrimitiveType()){
@@ -42,7 +82,7 @@ public class Transformer {
             String name = type.asClassOrInterfaceType().getName().getIdentifier();
             if(classesMap.containsKey(name)) name =classesMap.get(name);
             List<String> subs = new ArrayList<>();
-            if(type.asClassOrInterfaceType().getTypeArguments().isPresent()) for (Type type1 : type.asClassOrInterfaceType().getTypeArguments().get()) {
+            if(!noParametersList.contains(name)) if(type.asClassOrInterfaceType().getTypeArguments().isPresent()) for (Type type1 : type.asClassOrInterfaceType().getTypeArguments().get()) {
                 subs.add(type(type1));
             }
             return name + (!subs.isEmpty() ? "<"+String.join(", ", subs)+">" : "");
@@ -59,21 +99,35 @@ public class Transformer {
         }
     }
     public static void modifiers(Object o, List<String> parts){
+        boolean isPublic = false, isPrivate = false, isProtected = false, isAbstract = false, isStatic = false, isFinal = false;
         if(o instanceof NodeWithAccessModifiers<?> field){
-            boolean isPublic = field.isPublic();
-            boolean isPrivate = field.isPrivate();
-            boolean isProtected = field.isProtected();
-            if(isPublic) parts.add("public");
-            if(isPrivate) parts.add("private");
-            if(isProtected) parts.add("protected");
+            isPublic = field.isPublic();
+            isPrivate = field.isPrivate();
+            isProtected = field.isProtected();
+        }
+        if(o instanceof NodeWithAbstractModifier<?> field){
+            isAbstract = field.isAbstract();
         }
         if(o instanceof NodeWithStaticModifier<?> field){
-            boolean isStatic = field.isStatic();
-            if(isStatic) parts.add("static");
+            isStatic = field.isStatic();
         }
         if(o instanceof NodeWithFinalModifier<?> field){
-            boolean isFinal = field.isFinal();
-            if(isFinal) parts.add("readonly");
+            isFinal = field.isFinal();
         }
+        int modifiers = (o instanceof Method) ? ((Method) o).getModifiers() : (o instanceof Field) ? ((Field) o).getModifiers() : (o instanceof Class<?>) ? ((Class<?>) o).getModifiers() : -1;
+        if(modifiers != -1) {
+            isPublic = Modifier.isPublic(modifiers);
+            isPrivate = Modifier.isPrivate(modifiers);
+            isProtected = Modifier.isProtected(modifiers);
+            isAbstract = Modifier.isAbstract(modifiers);
+            isStatic = Modifier.isStatic(modifiers);
+            isFinal = Modifier.isAbstract(modifiers);
+        }
+        if(isPublic) parts.add("public");
+        if(isPrivate) parts.add("private");
+        if(isProtected) parts.add("protected");
+        if(isFinal) parts.add("readonly");
+        if(isStatic) parts.add("static");
+        if(isAbstract)parts.add("abstract");
     }
 }

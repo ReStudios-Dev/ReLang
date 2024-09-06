@@ -1,5 +1,6 @@
 package org.restudios.relang.parser.ast.types.nodes.statements.overloading;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.nodes.statements.BlockStatement;
 import org.restudios.relang.parser.ast.types.nodes.statements.OperatorOverloadStatement;
@@ -25,6 +26,13 @@ public class CastOverloadStatement extends OperatorOverloadStatement {
     }
 
     @Override
+    public void analyze(AnalyzerContext context) {
+        AnalyzerContext nc = context.create();
+        nc.putVariable(from.variable, from.type);
+        body.analyze(nc);
+    }
+
+    @Override
     public void execute(Context context) {
 
     }
@@ -36,7 +44,7 @@ public class CastOverloadStatement extends OperatorOverloadStatement {
 
     @Override
     public FunctionMethod method(Context context) {
-        FunctionArgument from = new FunctionArgument(this.from.variable, this.from.type);
+        FunctionArgument from = new FunctionArgument(this.from.variable, this.from.type, false);
         return new CastOperatorOverloadFunctionMethod(new ArrayList<>(), body, from, to, implicit);
     }
 }

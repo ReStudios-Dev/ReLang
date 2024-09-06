@@ -16,16 +16,10 @@ public class DoWhileStatement extends WhileStatement{
 
     @Override
     public void execute(Context context) {
-        Context sub = new Context(context);
-        body.execute(sub);
-        while (true){
-            Value cond = condition.eval(sub).finalExpression();
-            if (cond instanceof BooleanValue){
-                if(!cond.booleanValue())break;
-            }else{
-                throw new RLException("While loop accepts only boolean expressions", Type.internal(context), context);
-            }
+        Value cond;
+        do {
+            Context sub = new Context(context);
             body.execute(sub);
-        }
+        } while ((cond = condition.eval(context).finalExpression()) instanceof BooleanValue && cond.booleanValue());
     }
 }

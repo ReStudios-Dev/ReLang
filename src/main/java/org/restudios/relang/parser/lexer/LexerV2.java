@@ -109,6 +109,7 @@ public class LexerV2 {
         special.put("++", TokenType.INCREMENT);
         special.put("--", TokenType.DECREMENT);
         special.put("=", TokenType.EQUAL);
+        special.put("...", TokenType.TRIPLE_DOT);
         special.put(".", TokenType.DOT);
         special.put(",", TokenType.COMMA);
         special.put(":", TokenType.COLON);
@@ -340,6 +341,7 @@ public class LexerV2 {
         keywords.put("catch", TokenType.CATCH);
         keywords.put("if", TokenType.IF);
         keywords.put("else", TokenType.ELSE);
+        keywords.put("instanceof", TokenType.INSTANCEOF);
         keywords.put("foreach", TokenType.FOREACH);
         keywords.put("for", TokenType.FOR);
         keywords.put("fori", TokenType.FORI);

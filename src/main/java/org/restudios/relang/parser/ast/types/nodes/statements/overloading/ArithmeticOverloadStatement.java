@@ -1,5 +1,6 @@
 package org.restudios.relang.parser.ast.types.nodes.statements.overloading;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.nodes.statements.BlockStatement;
 import org.restudios.relang.parser.ast.types.nodes.statements.OperatorOverloadStatement;
@@ -29,6 +30,15 @@ public class ArithmeticOverloadStatement extends OperatorOverloadStatement {
     }
 
     @Override
+    public void analyze(AnalyzerContext context) {
+        AnalyzerContext nc = context.create();
+        for (VariableDeclarationStatement argument : arguments) {
+            nc.putVariable(argument.variable, argument.type);
+        }
+        body.analyze(nc);
+    }
+
+    @Override
     public String toString() {
         return "arithmetic operator [" + operator + "]";
     }
@@ -39,8 +49,8 @@ public class ArithmeticOverloadStatement extends OperatorOverloadStatement {
         ArrayList<FunctionArgument> args = new ArrayList<>();
         if(arguments != null)
             for (VariableDeclarationStatement argument : arguments) {
-                args.add(new FunctionArgument(argument.variable, argument.type));
+                args.add(new FunctionArgument(argument.variable, argument.type, false));
             }
-        return new FunctionMethod(new ArrayList<>(), args, returingType, operator, new ArrayList<>(), body, false, false);
+        return new FunctionMethod(new ArrayList<>(), args, returingType, operator, new ArrayList<>(), body, false, false, new ArrayList<>());
     }
 }

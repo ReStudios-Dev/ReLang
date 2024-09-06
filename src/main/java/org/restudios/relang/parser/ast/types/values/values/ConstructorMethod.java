@@ -4,6 +4,7 @@ import org.restudios.relang.parser.ast.types.Visibility;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.nodes.expressions.CastExpression;
+import org.restudios.relang.parser.ast.types.nodes.extra.LoadedAnnotation;
 import org.restudios.relang.parser.ast.types.nodes.statements.BlockStatement;
 import org.restudios.relang.parser.ast.types.values.ClassInstance;
 import org.restudios.relang.parser.ast.types.values.Context;
@@ -24,11 +25,11 @@ public class ConstructorMethod extends FunctionMethod {
 
     public ConstructorMethod(List<CustomTypeValue> customTypes, List<FunctionArgument> arguments, Type returnType,
                              String name, List<Visibility> visibility, BlockStatement code,
-                             boolean isAbstract, List<Expression> callSuper) {
-        super(customTypes, arguments, returnType, name, visibility, code, isAbstract, false);
+                             boolean isAbstract, List<Expression> callSuper, boolean isNative,
+                             List<LoadedAnnotation> annotations) {
+        super(customTypes, arguments, returnType, name, visibility, code, isAbstract, isNative, annotations);
         this.callSuper = callSuper;
     }
-
     @Override
     public Value execute(Context context, Context callContext,  Value... values) {
         if(getArguments().size() != values.length){
@@ -61,6 +62,7 @@ public class ConstructorMethod extends FunctionMethod {
             clazz.callConstructor(context, ci.getContext(), vals);
         }
         con.setInConstructor(true);
+        if(isNative && code == null) return ci;
         code.execute(con);
         return ci;
     }

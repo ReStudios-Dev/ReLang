@@ -1,304 +1,174 @@
 /*
 * GENERATED
 */
-public native class ASTGenerator {
-    /* line: 66, column: 5 */ private readonly array<Token> tokens;
-    /* line: 67, column: 5 */ private readonly Token eof;
-    /* line: 68, column: 5 */ private int current;
-    /* line: 69, column: 5 */ private readonly array<ASTError> errors;
-    /* line: 70, column: 5 */ private readonly str code;
-    /* line: 71, column: 5 */ private readonly str source;
-    /* line: 72, column: 5 */ private bool ignoreNonCritical;
-    /* line: 73, column: 5 */ private PsiListener listener;
+@ReflectionClass("java.io.File")
+public native class File implements Serializable, Comparable<File> {
+    private static FileSystem FS;
+    private str path;
+    private PathStatus status;
+    private int prefixLength;
+    public static char separatorChar;
+    public static str separator;
+    public static char pathSeparatorChar;
+    public static str pathSeparator;
+    private static Unsafe UNSAFE;
+    private static int PATH_OFFSET;
+    private static int PREFIX_LENGTH_OFFSET;
+    private static int serialVersionUID;
+    private Path filePath;
+    static bool $assertionsDisabled;
 
 
-    /* line: 75, column: 5 */
-    native public ASTGenerator(array<Token> tokens, str code, str source);
+    native public str getName();
 
-    /* line: 87, column: 5 */
-    native public PsiListener getPSIListener();
+    native public bool equals(Object arg0);
 
-    /* line: 92, column: 5 */
-    native public ASTGenerator setPSIListener(PsiListener listener);
+    native public int length();
 
-    /* line: 98, column: 5 */
-    native public bool isIgnoreNonCritical();
+    native public str toString();
 
-    /* line: 102, column: 5 */
-    native public ASTGenerator setIgnoreNonCritical(bool ignoreNonCritical);
+    native public int hashCode();
 
-    /* line: 108, column: 5 */
-    native public array<ASTError> getAstErrors();
+    native public bool isHidden();
 
-    /* line: 113, column: 5 */
-    native private Token emptyToken(int pos);
+    native public int compareTo(File arg0);
 
-    /* line: 118, column: 5 */
-    native public BlockStatement parseProgram();
+    native public int compareTo(Object arg0);
 
-    /* line: 128, column: 5 */
-    native public Statement parseStatement();
+    native public String[] list();
 
-    /* line: 131, column: 5 */
-    native public Statement parseStatement(bool checkSemicolon);
+    native public String[] list(FilenameFilter arg0);
 
-    /* line: 223, column: 5 */
-    native public Statement parseClassDefinition();
+    native public bool isAbsolute();
 
-    /* line: 273, column: 5 */
-    native private array<str> parseCustomTypesDeclaration();
+    native public str getParent();
 
-    /* line: 290, column: 5 */
-    native private ClassBlock parseClassBlock(ClassType type);
+    native private void readObject(ObjectInputStream arg0);
 
-    /* line: 304, column: 5 */
-    native private ClassBlock parseEnumClassBlock();
+    native private void writeObject(ObjectOutputStream arg0);
 
-    /* line: 340, column: 5 */
-    native private ClassBlock parseInterfaceClassBlock();
+    native public bool delete();
 
-    /* line: 358, column: 5 */
-    native private ClassBlock parseBaseClassBlock();
+    native public bool setReadOnly();
 
-    /* line: 374, column: 5 */
-    native private ClassBlock parseAbstractClassBlock();
+    native public bool canRead();
 
-    /* line: 383, column: 5 */
-    native private ClassBlock asClassBlock(array<Statement> statements);
+    native public str getPath();
 
-    /* line: 405, column: 5 */
-    native private Statement parseClassInsideDeclaration();
+    native public URI toURI();
 
-    /* line: 414, column: 5 */
-    native private Statement parseExpressionStatement();
+    native public URL toURL();
 
-    /* line: 429, column: 5 */
-    native private ForiStatement parseForiStatement();
+    native public str getAbsolutePath();
 
-    /* line: 448, column: 5 */
-    native private ForStatement parseForStatement();
+    native public bool exists();
 
-    /* line: 466, column: 5 */
-    native private WhileStatement parseWhileStatement();
+    native public bool createNewFile();
 
-    /* line: 473, column: 5 */
-    native private DoWhileStatement parseDoWhileStatement();
+    native public bool renameTo(File arg0);
 
-    /* line: 481, column: 5 */
-    native private ForeachStatement parseForeachStatement();
+    native public bool isDirectory();
 
-    /* line: 494, column: 5 */
-    native private ThrowStatement parseThrowStatement();
+    native bool isInvalid();
 
-    /* line: 499, column: 5 */
-    native private TryStatement parseTryStatement();
+    native public str getCanonicalPath();
 
-    /* line: 505, column: 5 */
-    native private array<CatchNode> parseCatchNodes();
+    native private static str slashify(str arg0, bool arg1);
 
-    /* line: 516, column: 5 */
-    native private CatchNode parseCatchNode();
+    native public File getAbsoluteFile();
 
-    /* line: 524, column: 5 */
-    native private IfStatement parseIfStatement();
+    native private String[] normalizedList();
 
-    /* line: 535, column: 5 */
-    native private ReturnStatement parseReturn();
+    native public bool mkdir();
 
-    /* line: 541, column: 5 */
-    native private ExitStatement parseExit();
+    native public File getCanonicalFile();
 
-    /* line: 547, column: 5 */
-    native private ErrorStatement parseError();
+    native public File getParentFile();
 
-    /* line: 555, column: 5 */
-    native private OutputStatement parseOutput();
+    native public bool mkdirs();
 
-    /* line: 564, column: 5 */
-    native private MethodDeclarationStatement parseMethodDeclaration();
+    native public bool setWritable(bool arg0);
 
-    /* line: 618, column: 5 */
-    native private array<Expression> parseSuper();
+    native public bool setWritable(bool arg0, bool arg1);
 
-    /* line: 629, column: 5 */
-    native private array<Visibility> parseVisibilities(bool realPick);
+    native public bool setReadable(bool arg0, bool arg1);
 
-    /* line: 638, column: 5 */
-    native private Visibility parseVisibility();
+    native public bool setReadable(bool arg0);
 
-    /* line: 656, column: 5 */
-    native private BlockStatement parseCodeBlock();
+    native public bool setExecutable(bool arg0, bool arg1);
 
-    /* line: 673, column: 5 */
-    native private array<VariableDeclarationStatement> parseArgumentsOfMethodDeclaration();
+    native public bool setExecutable(bool arg0);
 
-    /* line: 676, column: 5 */
-    native private array<VariableDeclarationStatement> parseArgumentsOfMethodDeclaration(bool nullOnError);
+    native public static File[] listRoots();
 
-    /* line: 704, column: 5 */
-    native private VariableDeclarationStatement parseVariableArgumentDeclaration();
+    native public static File createTempFile(str arg0, str arg1);
 
-    /* line: 707, column: 5 */
-    native private VariableDeclarationStatement parseVariableArgumentDeclaration(bool nullOnError);
+    native public static File createTempFile(str arg0, str arg1, File arg2);
 
-    /* line: 721, column: 5 */
-    native private MethodCallStatement parseMethodCall();
+    native int getPrefixLength();
 
-    /* line: 731, column: 5 */
-    native private array<Expression> parseExpressionList();
+    native public bool canWrite();
 
-    /* line: 755, column: 5 */
-    native public bool nextOperator();
+    native public bool isFile();
 
-    /* line: 768, column: 5 */
-    native private bool parseMethodMiddle(int initialPosition);
+    native public int lastModified();
 
-    /* line: 784, column: 5 */
-    native public bool nextMethod();
+    native public void deleteOnExit();
 
-    /* line: 815, column: 5 */
-    native public bool nextVariable();
+    native public File[] listFiles(FileFilter arg0);
 
-    /* line: 839, column: 5 */
-    native public bool nextClass();
+    native public File[] listFiles(FilenameFilter arg0);
 
-    /* line: 855, column: 5 */
-    native public OperatorOverloadStatement parseOperatorMethod();
+    native public File[] listFiles();
 
-    /* line: 887, column: 5 */
-    native private str parseBinaryOperation();
+    native public bool setLastModified(int arg0);
 
-    /* line: 924, column: 5 */
-    native private VariableDeclarationStatement parseVariableDeclaration();
+    native public bool canExecute();
 
-    /* line: 941, column: 5 */
-    native private array<Type> parseCustomTypes(bool nullOnError);
+    native public int getTotalSpace();
 
-    /* line: 970, column: 5 */
-    native private Type parseType();
+    native public int getFreeSpace();
 
-    /* line: 973, column: 5 */
-    native private Type parseType(bool nullOnError);
+    native public int getUsableSpace();
 
-    /* line: 1015, column: 5 */
-    native public Expression parseExpression();
+    native public Path toPath();
 
-    /* line: 1028, column: 5 */
-    native private Expression parseCasting();
 
-    /* line: 1056, column: 5 */
-    native private Expression parseAssignment();
+    /*
+    * GENERATED
+    */
+    @ReflectionClass("java.io.File$PathStatus")
+    private static native enum PathStatus extends Enum {
+        public static PathStatus INVALID;
+        public static PathStatus CHECKED;
+        private static PathStatus[] $VALUES;
+    
+    
+        native public static PathStatus[] values();
+    
+        native public static PathStatus valueOf(str arg0);
+    
+        native private static PathStatus[] $values();
+    
+    
+    }
 
-    /* line: 1079, column: 5 */
-    native private Expression parseHardArray();
-
-    /* line: 1102, column: 5 */
-    native private Expression parseLogical();
-
-    /* line: 1131, column: 5 */
-    native private Expression parseBitLogical();
-
-    /* line: 1144, column: 5 */
-    native private Expression parseBitBinary();
-
-    /* line: 1159, column: 5 */
-    native public str parseBitBinaryOperator(TokenType p, TokenType c, TokenType n);
-
-    /* line: 1171, column: 5 */
-    native private Expression parseAddition();
-
-    /* line: 1184, column: 5 */
-    native private Expression parseMultiplication();
-
-    /* line: 1197, column: 5 */
-    native private Expression parseExponentiation();
-
-    /* line: 1210, column: 5 */
-    native private Expression parseUnary();
-
-    /* line: 1225, column: 5 */
-    native private Expression parseBitUnary();
-
-    /* line: 1234, column: 5 */
-    native private Expression parseClassInstantiation();
-
-    /* line: 1248, column: 5 */
-    native private Expression parseMembers();
-
-    /* line: 1249, column: 5 */
-    native private Expression parseMembers(bool ignoreMethodCallCheck);
-
-    /* line: 1263, column: 5 */
-    native private Expression parseMethodCallExpression();
-
-    /* line: 1277, column: 5 */
-    native private Expression parseArrayItem();
-
-    /* line: 1288, column: 5 */
-    native private Expression parsePrimary();
-
-    /* line: 1342, column: 5 */
-    native private LambdaExpression parseLambda();
-
-    /* line: 1363, column: 5 */
-    native private bool isClassDefinition(TokenType type);
-
-    /* line: 1375, column: 5 */
-    native private bool isAssignOperator(TokenType type);
-
-    /* line: 1397, column: 5 */
-    native private bool isVisibility(TokenType type);
-
-    /* line: 1409, column: 5 */
-    native private bool isType(TokenType type);
-
-    /* line: 1410, column: 5 */
-    native private bool isType(TokenType type, bool voidInclude);
-
-    /* line: 1424, column: 5 */
-    native private bool match(TokenType types);
-
-    /* line: 1434, column: 5 */
-    native private void consume(TokenType type, str message);
-
-    /* line: 1450, column: 5 */
-    native private bool check(TokenType type);
-
-    /* line: 1458, column: 5 */
-    native private Token advance();
-
-    /* line: 1467, column: 5 */
-    native private Token peek();
-
-    /* line: 1470, column: 5 */
-    native private Token peek(int step);
-
-    /* line: 1474, column: 5 */
-    native private Token peekSafe(int step);
-
-    /* line: 1478, column: 5 */
-    native private Token previous();
-
-    /* line: 1482, column: 5 */
-    native private Token previousSafe();
-
-    /* line: 1486, column: 5 */
-    native private void moveBack(int step);
-
-    /* line: 1490, column: 5 */
-    native private bool isAtEnd();
-
-    /* line: 1496, column: 5 */
-    native private void unexpectedToken(Token token);
-
-    /* line: 1508, column: 5 */
-    native private void unexpected(Token token, str expected);
-
-    /* line: 1527, column: 5 */
-    native private void thr(Token token, str string);
-
-    /* line: 1535, column: 5 */
-    native private void unexpectedStatement(Statement statement, str expected);
-
+    /*
+    * GENERATED
+    */
+    @ReflectionClass("java.io.File$TempDirectory")
+    private static native class TempDirectory {
+        private static File TMPDIR;
+        private static SecureRandom RANDOM;
+    
+    
+        native private static int shortenSubName(int arg0, int arg1, int arg2);
+    
+        native static File location();
+    
+        native static File generateFile(str arg0, str arg1, File arg2);
+    
+    
+    }
 
 }

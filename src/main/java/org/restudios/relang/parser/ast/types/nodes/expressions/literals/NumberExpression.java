@@ -7,4 +7,5 @@ public abstract class NumberExpression extends LiteralExpression {
     public NumberExpression(Token token) {
         super(token);
     }
+
 }

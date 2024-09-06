@@ -1,5 +1,6 @@
 package org.restudios.relang.parser.ast.types.nodes.statements;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
 import org.restudios.relang.parser.ast.types.nodes.DeclarationStatement;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
@@ -69,4 +70,11 @@ public class BlockStatement extends Statement {
         topPriority.forEach(statement -> statement.prepare(context));
     }
 
+    @Override
+    public void analyze(AnalyzerContext context) {
+        AnalyzerContext nc = context.create();
+        for (Statement statement : statements) {
+            statement.analyze(nc);
+        }
+    }
 }

@@ -27,4 +27,9 @@ public class CustomTypeValue {
     public CustomTypeValue clone(){
         return new CustomTypeValue(name, value.clone());
     }
+
+    @Override
+    public String toString() {
+        return getValue()+" "+name;
+    }
 }

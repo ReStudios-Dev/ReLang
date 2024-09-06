@@ -4,12 +4,14 @@ import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.values.RLClass;
 
-public class TypeValue implements Value{
+public class TypeValue implements Value {
 
     public final Type value;
+    public final String name;
 
-    public TypeValue(Type value) {
+    public TypeValue(String name, Type value) {
         this.value = value;
+        this.name = name;
     }
 
     @Override

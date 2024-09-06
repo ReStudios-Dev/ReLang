@@ -11,6 +11,7 @@ import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +21,8 @@ public class MethodNode extends Node{
     private Type type;
     private String name;
     private List<Parameter> parameters;
+
+    private Method reflectMethod;
 
     public MethodNode(MethodDeclaration declaration) {
         this.declaration = declaration;
@@ -34,9 +37,29 @@ public class MethodNode extends Node{
         this.parameters = declaration.getParameters();
     }
 
+    public MethodNode(Method reflectMethod) {
+        this.reflectMethod = reflectMethod;
+    }
+
     @Override
     public List<String> stringify() {
         List<String> result = new ArrayList<>();
+
+        if(reflectMethod != null){
+            List<String> parts = new ArrayList<>();
+            parts.add("native");
+            Transformer.modifiers(reflectMethod, parts);
+            parts.add(Transformer.type(reflectMethod.getGenericReturnType()));
+            parts.add(reflectMethod.getName());
+            List<String> arguments = new ArrayList<>();
+            for (java.lang.reflect.Parameter parameter : reflectMethod.getParameters()) {
+                arguments.add(Transformer.type(parameter.getParameterizedType())+" "+parameter.getName());
+            }
+            String args = "("+String.join(", ", arguments)+")";
+            result.add(String.join(" ", parts)+args+";");
+            return result;
+        }
+
         String info = "";
 
         if(declaration instanceof MethodDeclaration){

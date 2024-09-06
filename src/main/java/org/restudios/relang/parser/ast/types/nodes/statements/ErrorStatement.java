@@ -1,5 +1,6 @@
 package org.restudios.relang.parser.ast.types.nodes.statements;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 import org.restudios.relang.parser.ast.types.values.Context;
@@ -15,6 +16,11 @@ public class ErrorStatement extends Statement {
     public ErrorStatement(Token token) { // just a new line
         super(token);
         expression = null;
+    }
+
+    @Override
+    public void analyze(AnalyzerContext context) {
+        if(expression != null) expression.predictType(context);
     }
 
     @Override

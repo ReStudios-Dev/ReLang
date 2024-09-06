@@ -1,5 +1,7 @@
 package org.restudios.relang.parser.ast.types.nodes.statements;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 import org.restudios.relang.parser.ast.types.nodes.Type;
@@ -15,6 +17,15 @@ public class ThrowStatement extends Statement {
     public ThrowStatement(Token token, Expression expression) {
         super(token);
         this.expression = expression;
+    }
+
+    @Override
+    public void analyze(AnalyzerContext context) {
+        Type t = expression.predictType(context);
+        if(!t.isCustomType()) throw new AnalyzerError("Cannot throw primitive type", expression.token);
+        if(!t.clazz.isThrowable(context)){
+            throw new AnalyzerError("Cannot throw non exception", expression.token);
+        }
     }
 
     @Override

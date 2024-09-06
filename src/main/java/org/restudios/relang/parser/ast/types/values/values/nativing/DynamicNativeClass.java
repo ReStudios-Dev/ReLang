@@ -3,6 +3,7 @@ package org.restudios.relang.parser.ast.types.values.values.nativing;
 import org.restudios.relang.parser.ast.types.ClassType;
 import org.restudios.relang.parser.ast.types.Visibility;
 import org.restudios.relang.parser.ast.types.nodes.Type;
+import org.restudios.relang.parser.ast.types.nodes.expressions.CastExpression;
 import org.restudios.relang.parser.ast.types.values.ClassInstance;
 import org.restudios.relang.parser.ast.types.values.Context;
 import org.restudios.relang.parser.ast.types.values.FunctionMethod;
@@ -15,6 +16,7 @@ import org.restudios.relang.parser.utils.NativeMethod;
 import org.restudios.relang.parser.utils.NativeMethodArguments;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -31,7 +33,7 @@ public class DynamicNativeClass extends RLClass {
 
     public void init() {
         for (NativeMethod nativeMethod : nativeClass.getNativeMethods()) {
-            FunctionMethod om = originalMethod(nativeMethod.getName(), nativeMethod.arguments);
+            FunctionMethod om = originalMethod(nativeMethod.getName(), nativeMethod.arguments, nativeMethod.isConstructorMethod());
             if(om == null){
                 throw new RuntimeException("Original method "+nativeMethod.getName()+" not found");
             }
@@ -39,6 +41,26 @@ public class DynamicNativeClass extends RLClass {
                 nativeMethod.init(om);
             }
         }
+    }
+
+    @Override
+    public FunctionMethod callConstructor(Context context, Context constructContext, Value... values) {
+        if(nativeClass.getNativeMethods().isEmpty()) {
+            return super.callConstructor(context, constructContext, values);
+        }
+        for (NativeMethod constructor : nativeClass.getNativeMethods()) {
+            if(!constructor.isConstructorMethod()) continue;
+            if(!constructor.canBeExecuted(values, constructContext)) continue;
+            List<Type> fa = new ArrayList<>(constructor.arguments.values());
+            Value[] casted = new Value[fa.size()];
+            for (int i = 0; i < fa.size(); i++) {
+                Type f = fa.get(i);
+                casted[i] = CastExpression.cast(f, values[i], context);
+            }
+            constructor.runMethod(constructContext, context, casted);
+            return constructor;
+        }
+        return super.callConstructor(context, constructContext, values);
     }
 
     @Override
@@ -58,6 +80,7 @@ public class DynamicNativeClass extends RLClass {
         for (Consumer<NativeMethodArguments> nativeMethodArgumentsConsumer : nativeClass.getOnInstantiate()) {
             nativeMethodArgumentsConsumer.accept(args);
         }
+        context.getModuleRegistry().forEach(module -> module.onClassInstantiate(ci, context, constructorArguments));
         return ci;
     }
 
@@ -89,11 +112,11 @@ public class DynamicNativeClass extends RLClass {
         return fm;
     }
 
-    public FunctionMethod originalMethod(String name, LinkedHashMap<String, Type> arguments) {
-        for (FunctionMethod method : getAllDeclaredMethods()) {
-            if(name.equals(method.name)){
-                ArrayList<Type> types = new ArrayList<>(arguments.values());
+    public FunctionMethod originalMethod(String name, LinkedHashMap<String, Type> arguments, boolean constructor) {
 
+        for (FunctionMethod method : constructor ? getConstructors() : getAllDeclaredMethods()) {
+            if(constructor || name.equals(method.name)){
+                ArrayList<Type> types = new ArrayList<>(arguments.values());
                 for (int i = 0; i < method.getArguments().size(); i++) {
                     FunctionArgument fa = method.getArguments().get(i);
                     if(types.get(i).isCustomType()){

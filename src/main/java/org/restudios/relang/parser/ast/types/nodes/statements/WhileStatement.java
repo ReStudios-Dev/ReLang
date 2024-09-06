@@ -1,5 +1,8 @@
 package org.restudios.relang.parser.ast.types.nodes.statements;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
+import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 import org.restudios.relang.parser.ast.types.nodes.Type;
@@ -20,9 +23,18 @@ public class WhileStatement extends Statement {
     }
 
     @Override
+    public void analyze(AnalyzerContext context) {
+        Type t = condition.predictType(context);
+        if(!t.canBe(Type.primitive(Primitives.BOOL))){
+            throw new AnalyzerError("Condition need to be logical", condition.token);
+        }
+        body.analyze(context.create());
+    }
+
+    @Override
     public void execute(Context context) {
-        Context sub = new Context(context);
         while (true){
+            Context sub = new Context(context);
             Value cond = condition.eval(sub).finalExpression();
             if (cond instanceof BooleanValue){
                 if(!cond.booleanValue())break;

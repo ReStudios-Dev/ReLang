@@ -50,4 +50,5 @@ public class RLRunnable extends SLLClassInstance {
         getSubTypes().clear();
         getSubTypes().add(new CustomTypeValue(name, type));
     }
+
 }

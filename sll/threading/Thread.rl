@@ -18,7 +18,7 @@ public native class Thread {
 
     native public static Thread getCurrentThread();
 
-    native private static void createName();
+    native private static str createName();
 
     explicit operator str(Thread t){
         return t.getName();

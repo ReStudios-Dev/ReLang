@@ -1,5 +1,6 @@
 package org.restudios.relang.parser.ast.types.nodes.statements.trying;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 import org.restudios.relang.parser.ast.types.nodes.statements.VariableDeclarationStatement;
 import org.restudios.relang.parser.ast.types.values.values.FunctionArgument;
@@ -30,9 +31,19 @@ public class CatchNode  {
         for (VariableDeclarationStatement variableDeclarationStatement : catching) {
              functionArguments.add(new FunctionArgument(
                      variableDeclarationStatement.variable,
-                     variableDeclarationStatement.type
+                     variableDeclarationStatement.type,
+                     false
              ));
         }
         return new CatchFunction(functionArguments, body);
+    }
+
+    public void analyze(AnalyzerContext n) {
+        AnalyzerContext context = n.create();
+
+        for (VariableDeclarationStatement variableDeclarationStatement : catching) {
+            context.putVariable(variableDeclarationStatement.variable, variableDeclarationStatement.type);
+        }
+        body.analyze(context);
     }
 }

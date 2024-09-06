@@ -1,5 +1,7 @@
 package org.restudios.relang.parser.ast.types.nodes.statements;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 import org.restudios.relang.parser.ast.types.nodes.Type;
@@ -26,6 +28,18 @@ public class ClassInstantiationStatement extends Statement {
         this.clazz = clazz;
         this.types = types;
         this.args = args;
+    }
+
+    @Override
+    public Type predictType(AnalyzerContext c) {
+        return clazz.predictType(c);
+    }
+
+    @Override
+    public void analyze(AnalyzerContext context) {
+        if (!clazz.predictType(context).isCustomType()) {
+            throw new AnalyzerError("Cannot instantiate non class", clazz.token);
+        }
     }
 
     @Override

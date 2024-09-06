@@ -1,5 +1,7 @@
 package org.restudios.relang.parser.ast.types.nodes;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.values.Context;
 import org.restudios.relang.parser.ast.types.values.values.NullValue;
 import org.restudios.relang.parser.ast.types.values.values.Value;
@@ -16,6 +18,11 @@ public abstract class Statement extends Expression {
             public void execute(Context context) {
                 exp.eval(context);
             }
+
+            @Override
+            public void analyze(AnalyzerContext context) {
+                
+            }
         };
     }
 
@@ -24,4 +31,11 @@ public abstract class Statement extends Expression {
         return new NullValue();
     }
     public abstract void execute(Context context);
+    
+    @Override
+    public Type predictType(AnalyzerContext c) {
+        return Primitives.VOID.type();
+    }
+    public abstract void analyze(AnalyzerContext context);
 }
+

@@ -1,5 +1,6 @@
 package org.restudios.relang.parser.ast.types.nodes.statements;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.nodes.statements.trying.CatchNode;
@@ -32,6 +33,15 @@ public class TryStatement extends Statement {
             }
         }
         return null;
+    }
+
+    @Override
+    public void analyze(AnalyzerContext context) {
+        AnalyzerContext nc = context.create();
+        body.analyze(nc);
+        for (CatchNode catchNode : catching) {
+            catchNode.analyze(context);
+        }
     }
 
     public Value[] getArguments(CatchNode node, ClassInstance instance, Context context){

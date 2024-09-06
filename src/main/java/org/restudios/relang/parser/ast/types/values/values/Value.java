@@ -76,6 +76,11 @@ public interface Value {
     int intValue();
     double floatValue();
     boolean booleanValue();
+
+    default Object convertNative() {
+        return null;
+    }
+
     default Value finalExpression(){
         return this;
     }

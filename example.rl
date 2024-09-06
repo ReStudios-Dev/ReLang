@@ -26,14 +26,15 @@ out;
 err(""); // you can also use without brackets: out "str";
 err; // new line
 
-// default variable operations/default binary operations
+// standard variable operations/binary operations
 int i = 4 ** 2; // pow
 i /= 2; // equivalent: i = i / 2
 i ??= 4; // equivalent: if(i == null){ i = 4; }
 
+// classes can be final (public final class test) if you need to prevent this class from being extended
 public class test<T> extends Something implements SomeInterface, SomeInterface2 { // custom types
   // get static class entries by <class>.<entry>: test.testVar;
-  // readonly variables can't be changed
+  // Read-only variables cannot be modified.
   private readonly static int testVar = 0;
   public T val;
 
@@ -42,6 +43,8 @@ public class test<T> extends Something implements SomeInterface, SomeInterface2 
   }
   // test(str) != test()
   public test(){
+    // The superclass constructor is called automatically if :super()
+    // is not specified or the superclass has a parameterless constructor
     val = new T();
   }
 
@@ -49,11 +52,11 @@ public class test<T> extends Something implements SomeInterface, SomeInterface2 
   explicit operator str(test t){ // when casting class to str
     return "";
   }
-  implicit operator test(str s){ // when casting string to class
+  implicit operator test(str s){ // when casting str to class
     return new test();
   }
 
-  /** cannot be other return type */
+  /** the return type can only be an instance of this class */
   test operator +(test left, test right){ // test + test = test
     return new test();
   }
@@ -118,8 +121,37 @@ ageVariable.setValueForce(t, 16); // update value forcibly (ignore readonly modi
 
 
 // lambda functions
-Runnable lamb = () -> {
+Runnable<int> lamb = () -> {
     throw new Exception("");
 };
 lamb.run();
-@fsdf
+// In case of Runnable class you don't need to call run method.
+// You can use variable as function directly.
+lamb();
+
+
+// Cast lambda to interface with single function
+public interface Action {
+    public int doIt(int input1, int input2);
+}
+Action action = (int i1, int i2) -> {
+    return 0;
+}
+action.doIt(1, 2);
+
+// Annotations
+// An instance of annotation classes is created directly when
+// declaring the classes once. For each instance of the class
+// with annotation, one instance of the annotation
+public annotation TestA {
+    public TestA() {
+        // todo
+    }
+    public TestA(int parameter0, str parameter1){
+    }
+}
+
+@TestA(1, "gg") // you can specify arguments like with function
+@TestA() // for constructor without parameters
+@TestA // identical to @TestA()
+public class TestAnnotationUsage {}

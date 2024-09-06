@@ -1,5 +1,8 @@
 package org.restudios.relang.parser.ast.types.nodes.expressions;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
+import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.values.Context;
@@ -19,12 +22,26 @@ public class ListExpression extends Expression {
     }
 
     @Override
+    public Type predictType(AnalyzerContext c) {
+        return c.getClass(DynamicSLLClass.ARRAY).type();
+    }
+ 
+    @Override
     public Value eval(Context context) {
         ArrayList<Value> values = new ArrayList<>();
-        for (Expression item : items) {
-            values.add(item.eval(context));
+        Type t = null;
+        if(items.isEmpty()){
+             t= new Type(null, new ArrayList<>(), context.getClass(DynamicSLLClass.OBJECT));
         }
-        Type t = new Type(null, new ArrayList<>(), context.getClass(DynamicSLLClass.OBJECT));
+        for (Expression item : items) {
+            Value val = item.eval(context).finalExpression();
+            Type p = val.type();
+            if(t == null) t = p;
+            if(!p.canBe(t)){
+                throw new AnalyzerError("Mixed types", item.token);
+            }
+            values.add(val);
+        }
         if(!values.isEmpty()) t = values.get(0).type();
         RLArray le = new RLArray(t, context);
         for (Value value : values) {

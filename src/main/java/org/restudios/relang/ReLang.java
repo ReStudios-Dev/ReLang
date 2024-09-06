@@ -1,5 +1,6 @@
 package org.restudios.relang;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
 import org.restudios.relang.parser.ast.ASTGenerator;
 import org.restudios.relang.parser.ast.PsiListener;
 import org.restudios.relang.parser.ast.types.nodes.statements.BlockStatement;
@@ -7,6 +8,7 @@ import org.restudios.relang.parser.ast.types.values.Context;
 import org.restudios.relang.parser.ast.types.values.GlobalContext;
 import org.restudios.relang.parser.exceptions.ExitExp;
 import org.restudios.relang.parser.exceptions.RLException;
+import org.restudios.relang.parser.exceptions.ReturnExp;
 import org.restudios.relang.parser.lexer.LexerV2;
 import org.restudios.relang.parser.modules.threading.AThreadManager;
 import org.restudios.relang.parser.tokens.Token;
@@ -190,8 +192,10 @@ public class ReLang {
             for (BlockStatement blockStatement : statements) {
                 blockStatement.runProgram(context);
             }
-        }catch (ExitExp e){
+        } catch (ExitExp e) {
             exitCode = e.code;
+        } catch (ReturnExp e){
+            exitCode = e.value.finalExpression().intValue();
         } catch (RLException rle){
             exitCode = 1;
             if(debug){
@@ -225,5 +229,12 @@ public class ReLang {
         List<BlockStatement> statementList = classPaths.stream().map(classPath -> parseCode(classPath, listener)).collect(Collectors.toList());
         statementList.forEach(blockStatement -> blockStatement.prepare(context));
         return statementList;
+    }
+
+    public void analyze() {
+        AnalyzerContext analyzerContext = new AnalyzerContext(context);
+        for (BlockStatement statement : preparedCode) {
+            statement.analyze(analyzerContext);
+        }
     }
 }

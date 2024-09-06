@@ -1,5 +1,6 @@
 package org.restudios.relang.parser.ast.types.values;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
 import org.restudios.relang.parser.ast.types.ClassType;
 import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.Visibility;
@@ -45,7 +46,6 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
     }
     public void loadClassData(Context context, ArrayList<CustomTypeValue> subTypes, RLClass extending, ArrayList<RLClass> implementing, ArrayList<FunctionMethod> methods, ArrayList<ConstructorMethod> constructors, ArrayList<RLClass> subClasses, ArrayList<UnInitializedVariable> variables, ArrayList<FunctionMethod> operatorsOverloading) {
         if(loaded) return;
-        this.loaded = true;
         this.subTypes = subTypes;
         this.extending = extending;
         this.implementing = implementing;
@@ -59,6 +59,14 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
         for (CustomTypeValue subType : subTypes) {
             createdContext.putVariable(new Variable(Type.primitive(Primitives.TYPE), subType.name, new NullValue(), new ArrayList<>(Arrays.asList(Visibility.PRIVATE, Visibility.READONLY))));
         }
+        for (FunctionMethod allDeclaredMethod : getAllDeclaredMethods()) {
+            allDeclaredMethod.getReturnType().init(context);
+            allDeclaredMethod.getReturnType().initClassOrType(context);
+            for (FunctionArgument argument : allDeclaredMethod.getArguments()) {
+                argument.type.init(context);
+                argument.type.initClassOrType(context);
+            }
+        }
     }
     public void loadClassData(Context context, RLClass original) {
         loadClassData(context, original.subTypes, original.extending, original.implementing, original.methods, original.constructors, original.subClasses, original.variables, original.operatorsOverloading);
@@ -66,6 +74,11 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
     public void loadClassData(Context context){
         if(statement != null && !loaded){
             statement.doLoad(this, context);
+        }
+    }
+    public void preloadClassData(Context context){
+        if(statement != null && !loaded){
+            statement.preload(this, context);
         }
     }
 
@@ -123,7 +136,7 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
                             continue gen;
                         }
                     }
-                    if(!method.visibility.equals(visibility)) {
+                    if(visibility != null && !method.visibility.equals(visibility)) {
 
                         List<Visibility> nw = new ArrayList<>(method.visibility);
                         nw.remove(Visibility.OVERRIDE);
@@ -198,36 +211,7 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
     }
 
     public ArrayList<FunctionMethod> getAllMethods(boolean includeThis, boolean implementedOnly, boolean allowStatic){
-        ArrayList<FunctionMethod> result = new ArrayList<>();
-
-        if(extending != null){
-            for (FunctionMethod parentMethod : extending.getAllMethods(true, implementedOnly, allowStatic)) {
-
-                if(!allowStatic && parentMethod.visibility.contains(Visibility.STATIC))continue;
-                if(result.contains(parentMethod))continue;
-                if(implementedOnly){
-                    if(!parentMethod.isAbstract || parentMethod.isNative) {
-                        result.add(parentMethod);
-                    }
-                }else{
-                    result.add(parentMethod);
-                }
-            }
-        }
-        if(!implementedOnly){
-            for (RLClass rlClass : implementing) {
-                for (FunctionMethod parentMethod : rlClass.getAllMethods(true, false, allowStatic)) {
-                    if(!allowStatic && parentMethod.visibility.contains(Visibility.STATIC))continue;
-                    if(result.contains(parentMethod))continue;
-                    result.add(parentMethod);
-                }
-            }
-        }
-        for (FunctionMethod method : methods) {
-            tryToAdd(method, allowStatic, result, createdContext);
-
-        }
-        return result;
+        return getAllMethodsOriginal(includeThis, implementedOnly, allowStatic);
     }
     public static ArrayList<FunctionMethod> tryToAdd(FunctionMethod method, boolean allowStatic, ArrayList<FunctionMethod> result, Context context){
         if(!allowStatic && method.visibility.contains(Visibility.STATIC)) return result;
@@ -300,7 +284,6 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
             }
             if(!names.isEmpty()){
                 try {
-
                     throw new RLException("Unimplemented methods: "+names, Type.internal(context), context);
                 }catch (Exception e){
                     throw new RuntimeException("Unimplemented methods: "+names+" ["+this.name+"]");
@@ -310,8 +293,16 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
         ArrayList<FunctionMethod> fa = getOverridableMethods(false);
         for (FunctionMethod method : methods) {
 
+            for (Type argumentType : method.getArgumentTypes()) {
+                argumentType.init(context);
+                argumentType.initClassOrType(context);
+            }
             for (FunctionMethod functionMethod : methods) {
                 if(method == functionMethod) continue;
+                for (Type argumentType : functionMethod.getArgumentTypes()) {
+                    argumentType.init(context);
+                    argumentType.initClassOrType(context);
+                }
                 if(method.same(functionMethod)){
                     throw new RLException("Method "+functionMethod.name+" already exists", Type.internal(context), context);
                 }
@@ -373,6 +364,9 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
     public void initializeStaticContext(){
         if(!initialized){
             initialized = true;
+            if(methods == null) methods = new ArrayList<>();
+            if(variables == null) variables = new ArrayList<>();
+            if(subClasses == null) subClasses = new ArrayList<>();
             for (FunctionMethod method : methods) {
                 if(method.visibility.contains(Visibility.STATIC)){
                     statics.putMethod(method);
@@ -465,7 +459,7 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
         }
         return null;
     }
-    public FunctionMethod findRawMethod(String name, LinkedHashMap<String, Type> arguments, Context context) {
+    public FunctionMethod findRawMethod(String name, LinkedHashMap<String, Type> arguments, boolean varArgs, Context context) {
         FunctionMethod fm = findMethod(name, arguments, methods, context);
         if(fm != null) return fm;
         fm = findMethod(name, arguments, getAllMethods(true, false, false), context);
@@ -482,6 +476,13 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
         context.setCurrentMethod("<init>");
         callConstructor(context, instance.getContext(), constructorArguments);
         context.setCurrentMethod(cmethod);
+        context.getModuleRegistry().forEach(module -> module.onClassInstantiate(instance, context, constructorArguments));
+        return instance;
+    }
+    public ClassInstance forceInstantiate(Context context){
+        initializeStaticContext();
+        ClassInstance instance = new ClassInstance(this, new ArrayList<>(), context);
+        createdChild(instance);
         return instance;
     }
 
@@ -692,5 +693,82 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
 
     public List<LoadedAnnotation> getAnnotations() {
         return annotations;
+    }
+
+    public boolean isAnnotated(RLClass reflectionClass) {
+        for (LoadedAnnotation annotation : annotations) {
+            if(annotation.ci.getRLClass().check(reflectionClass)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public LoadedAnnotation getAnnotation(RLClass reflectionClass) {
+        for (LoadedAnnotation annotation : annotations) {
+            if(annotation.ci.getRLClass().check(reflectionClass)){
+                return annotation;
+            }
+        }
+        return null;
+    }
+    public boolean isInstanceOf(RLClass clazz){
+        if(check(clazz)) return true;
+        if(getSuperClass() != null) {
+            if(getSuperClass().isInstanceOf(clazz)) return true;
+        }
+        for (RLClass rlClass : implementing) {
+            if(rlClass.isInstanceOf(clazz)) return true;
+        }
+        return false;
+    }
+
+    public boolean isThrowable(AnalyzerContext context) {
+        return isInstanceOf(context.getClass(DynamicSLLClass.EXCEPTION));
+    }
+
+    public ClassDeclarationStatement getDeclaration() {
+        return statement;
+    }
+
+    public boolean isLoaded() {
+        return loaded;
+    }
+
+    public void setLoaded() {
+        this.loaded = true;
+    }
+
+    public ArrayList<FunctionMethod> getAllMethodsOriginal(boolean includeThis, boolean implementedOnly, boolean allowStatic) {
+        ArrayList<FunctionMethod> result = new ArrayList<>();
+
+        if(extending != null){
+            for (FunctionMethod parentMethod : extending.getAllMethods(true, implementedOnly, allowStatic)) {
+
+                if(!allowStatic && parentMethod.visibility.contains(Visibility.STATIC))continue;
+                if(result.contains(parentMethod))continue;
+                if(implementedOnly){
+                    if(!parentMethod.isAbstract || parentMethod.isNative) {
+                        result.add(parentMethod);
+                    }
+                }else{
+                    result.add(parentMethod);
+                }
+            }
+        }
+        if(!implementedOnly){
+            for (RLClass rlClass : implementing) {
+                for (FunctionMethod parentMethod : rlClass.getAllMethods(true, false, allowStatic)) {
+                    if(!allowStatic && parentMethod.visibility.contains(Visibility.STATIC))continue;
+                    if(result.contains(parentMethod))continue;
+                    result.add(parentMethod);
+                }
+            }
+        }
+        for (FunctionMethod method : methods) {
+            tryToAdd(method, allowStatic, result, createdContext);
+
+        }
+        return result;
     }
 }

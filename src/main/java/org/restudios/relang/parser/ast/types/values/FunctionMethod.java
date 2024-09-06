@@ -1,7 +1,11 @@
 package org.restudios.relang.parser.ast.types.values;
 
+import org.restudios.relang.modules.Module;
 import org.restudios.relang.parser.ast.types.Visibility;
 import org.restudios.relang.parser.ast.types.nodes.Type;
+import org.restudios.relang.parser.ast.types.nodes.expressions.CastExpression;
+import org.restudios.relang.parser.ast.types.nodes.extra.AnnotationDefinition;
+import org.restudios.relang.parser.ast.types.nodes.extra.LoadedAnnotation;
 import org.restudios.relang.parser.ast.types.nodes.statements.BlockStatement;
 import org.restudios.relang.parser.ast.types.values.values.CustomTypeValue;
 import org.restudios.relang.parser.ast.types.values.values.FunctionArgument;
@@ -16,23 +20,26 @@ import org.restudios.relang.parser.exceptions.ReturnExp;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class FunctionMethod extends RLMethod {
     public final String name;
     public List<Visibility> visibility;
+    public List<LoadedAnnotation> annotations;
     public final BlockStatement code;
     public final boolean isAbstract;
     public final boolean isNative;
     public FunctionMethod(FunctionMethod original){
-        this(original.getCustomTypes(), original.getArguments(), original.getReturnType(), original.name, original.visibility, original.code, original.isAbstract, original.isNative);
+        this(original.getCustomTypes(), original.getArguments(), original.getReturnType(), original.name, original.visibility, original.code, original.isAbstract, original.isNative, original.annotations);
     }
-    public FunctionMethod(List<CustomTypeValue> customTypes, List<FunctionArgument> arguments, Type returnType, String name, List<Visibility> visibility, BlockStatement code, boolean isAbstract, boolean isNative) {
+    public FunctionMethod(List<CustomTypeValue> customTypes, List<FunctionArgument> arguments, Type returnType, String name, List<Visibility> visibility, BlockStatement code, boolean isAbstract, boolean isNative, List<LoadedAnnotation> annotations) {
         super(arguments, customTypes, returnType);
         this.name = name;
         this.visibility = visibility;
         this.code = code;
         this.isAbstract = isAbstract;
+        this.annotations = annotations;
         this.isNative = isNative;
     }
 
@@ -40,6 +47,12 @@ public class FunctionMethod extends RLMethod {
     public Value handle(Context context, Context callContext) {
         try {
             if(code == null){
+                for (Module module : context.getModuleRegistry()) {
+                    Value val = module.methodNotImplemented(context.thisClass(), context, this);
+                    if(val != null){
+                        return val;
+                    }
+                }
                 throw new RLException("Method "+name+" not implemented", Type.internal(context), context);
             }
             String currentMethod = context.getCurrentMethod();
@@ -63,8 +76,13 @@ public class FunctionMethod extends RLMethod {
 
     @Override
     public String toString() {
-        String vis = visibility.stream().map(visibility1 -> visibility1.name().toLowerCase()).collect(Collectors.joining(" "));
-        return vis+(isAbstract ? " abstract" : "")+" "+name+"()";
+        String vis = visibility.stream().map(visibility1 -> visibility1.name().toLowerCase()).filter(s -> !s.trim().isEmpty()).collect(Collectors.joining(" "));
+        String args = getArguments().stream().map(FunctionArgument::toString).collect(Collectors.joining(", "));
+        List<String> parts = new ArrayList<>();
+        if(!vis.trim().isEmpty()) parts.add(vis);
+        if(isAbstract) parts.add("abstract");
+        parts.add(name.trim()+"("+args+")");
+        return String.join(" ", parts);
     }
 
     public boolean checkOverridden(FunctionMethod method) {
@@ -124,7 +142,11 @@ public class FunctionMethod extends RLMethod {
             } else {
                 args.get(i).type.init(context);
             }
-            if(!values[i].type().canBe(args.get(i).type))return false;
+            try {
+                CastExpression.cast(args.get(i).type, values[i], context);
+            } catch (Exception e) {
+                return false;
+            }
         }
         return  true;
     }
@@ -145,5 +167,45 @@ public class FunctionMethod extends RLMethod {
             array.add(argumentType.getReflectionClass(context));
         }
         return array;
+    }
+
+    public boolean checkForArguments(FunctionMethod that) {
+        if (this == that) return true;
+        if(!Objects.equals(name, that.name)) return false;
+        List<Type> myArgs = getArgumentTypes();
+        List<Type> oArgs = that.getArgumentTypes();
+        if(myArgs.size() != oArgs.size()) return false;
+        for (int i = 0; i < myArgs.size(); i++) {
+            if(myArgs.get(i).clazz == null && myArgs.get(i).primitive == null) return false;
+            if(oArgs.get(i).clazz == null && oArgs.get(i).primitive == null) return false;
+            if(!myArgs.get(i).canBe(oArgs.get(i))) return false;
+        }
+        return getReturnType().canBe(that.getReturnType());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
+    }
+
+    public List<LoadedAnnotation> getAnnotations() {
+        return annotations;
+    }
+    public boolean isAnnotated(RLClass reflectionClass) {
+        for (LoadedAnnotation annotation : annotations) {
+            if(annotation.ci.getRLClass().check(reflectionClass)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public LoadedAnnotation getAnnotation(RLClass reflectionClass) {
+        for (LoadedAnnotation annotation : annotations) {
+            if(annotation.ci.getRLClass().check(reflectionClass)){
+                return annotation;
+            }
+        }
+        return null;
     }
 }

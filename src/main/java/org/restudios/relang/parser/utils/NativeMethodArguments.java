@@ -3,6 +3,7 @@ package org.restudios.relang.parser.utils;
 import org.restudios.relang.parser.ast.types.values.ClassInstance;
 import org.restudios.relang.parser.ast.types.values.Variable;
 import org.restudios.relang.parser.ast.types.values.values.Value;
+import org.restudios.relang.parser.ast.types.values.values.sll.classes.RLArray;
 import org.restudios.relang.parser.ast.types.values.values.sll.classes.RLStr;
 
 import java.util.HashMap;
@@ -50,5 +51,9 @@ public class NativeMethodArguments {
 
     public ClassInstance getClassInstance(String index) {
         return getVariable(index, ClassInstance.class);
+    }
+
+    public RLArray getArray(String args) {
+        return getVariable(args, RLArray.class);
     }
 }

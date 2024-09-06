@@ -1,5 +1,7 @@
 package org.restudios.relang.parser.ast.types.nodes.expressions.implicit;
 
+import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.UnaryImplicitOperationType;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Type;
@@ -21,6 +23,12 @@ public class UnaryImplicitExpression extends ImplicitExpression {
         this.expression = expression;
         this.operation = operation;
         this.value = value;
+    }
+
+    @Override
+    public Type predictType(AnalyzerContext c) {
+        // TODO PREDICT TYPE
+        return Primitives.NULL.type();
     }
 
     @Override
