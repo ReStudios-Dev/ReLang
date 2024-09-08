@@ -44,6 +44,18 @@ public class TryStatement extends Statement {
         }
     }
 
+    @Override
+    public boolean hasReturnStatement() {
+        if(body.hasReturnStatement()){
+            for (CatchNode catchNode : catching) {
+                if (!catchNode.getBody().hasReturnStatement()) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     public Value[] getArguments(CatchNode node, ClassInstance instance, Context context){
         Value[] values = new Value[node.getCatching().size()];
         for (int i = 0; i < node.getCatching().size(); i++) {

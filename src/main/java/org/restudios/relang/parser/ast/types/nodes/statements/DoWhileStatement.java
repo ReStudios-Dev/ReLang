@@ -22,4 +22,9 @@ public class DoWhileStatement extends WhileStatement{
             body.execute(sub);
         } while ((cond = condition.eval(context).finalExpression()) instanceof BooleanValue && cond.booleanValue());
     }
+
+    @Override
+    public boolean hasReturnStatement() {
+        return body.hasReturnStatement();
+    }
 }
