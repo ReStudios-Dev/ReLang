@@ -1,6 +1,7 @@
 package org.restudios.relang.parser.ast.types.nodes.statements;
 
 import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
 import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.Visibility;
 import org.restudios.relang.parser.ast.types.nodes.DeclarationStatement;
@@ -34,7 +35,19 @@ public class MethodDeclarationStatement extends DeclarationStatement {
                 argument.type.initClassOrType(context);
                 nc.putVariable(argument.variable, argument.type);
             }
+
+            Type before = context.setMustReturn(returning == null ? Primitives.VOID.type() : returning);
+
             code.analyze(nc);
+
+            context.setMustReturn(before);
+
+            if(returning != null) returning.initClassOrType(context);
+            if(returning != null && returning.primitive != Primitives.VOID && returning.primitive != Primitives.NULL){
+                if(!code.hasReturnStatement()){
+                    throw new AnalyzerError("The method must return "+returning, token);
+                }
+            }
         }
         context.putMethod(this);
     }

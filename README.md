@@ -76,6 +76,18 @@ for (Map.Entry<String, String> entry : map.entrySet()) {
     relang.getClassLoader().addClassPath(new ClassPath(entry.getKey() /* source (absolute file path) */, entry.getValue() /* code */));  
 }
 ```
+##### Prepare:
+
+```java
+relang.prepare();
+
+try {
+    relang.analyze();
+} catch (AnalyzerError error) {
+    error.printStackTrace(System.err);
+}
+```
+
 ##### Run:
 ```java
 int exitCode = relang.run();

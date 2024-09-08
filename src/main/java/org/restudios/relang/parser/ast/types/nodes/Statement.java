@@ -37,5 +37,9 @@ public abstract class Statement extends Expression {
         return Primitives.VOID.type();
     }
     public abstract void analyze(AnalyzerContext context);
+
+    public boolean hasReturnStatement(){
+        return false;
+    }
 }
 

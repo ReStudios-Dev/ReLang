@@ -1,8 +1,10 @@
 package org.restudios.relang.parser.ast.types.nodes.statements.overloading;
 
 import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.nodes.statements.BlockStatement;
+import org.restudios.relang.parser.ast.types.nodes.statements.MethodDeclarationStatement;
 import org.restudios.relang.parser.ast.types.nodes.statements.OperatorOverloadStatement;
 import org.restudios.relang.parser.ast.types.nodes.statements.VariableDeclarationStatement;
 import org.restudios.relang.parser.ast.types.values.FunctionMethod;
@@ -29,7 +31,12 @@ public class CastOverloadStatement extends OperatorOverloadStatement {
     public void analyze(AnalyzerContext context) {
         AnalyzerContext nc = context.create();
         nc.putVariable(from.variable, from.type);
+        Type before = context.setMustReturn(this.to);
         body.analyze(nc);
+        context.setMustReturn(before);
+        if(!body.hasReturnStatement()){
+            throw new AnalyzerError("The method must return "+to, token);
+        }
     }
 
     @Override

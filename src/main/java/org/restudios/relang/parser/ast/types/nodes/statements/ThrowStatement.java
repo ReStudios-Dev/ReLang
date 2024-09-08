@@ -46,4 +46,9 @@ public class ThrowStatement extends Statement {
         rle.setTrace(context.getTrace());
         throw rle;
     }
+
+    @Override
+    public boolean hasReturnStatement() {
+        return true;
+    }
 }

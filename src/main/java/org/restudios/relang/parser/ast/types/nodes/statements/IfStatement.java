@@ -38,4 +38,10 @@ public class IfStatement extends Statement {
             }
         }
     }
+
+    @Override
+    public boolean hasReturnStatement() {
+        if(elseBody == null) return false;
+        return elseBody.hasReturnStatement() && body.hasReturnStatement();
+    }
 }

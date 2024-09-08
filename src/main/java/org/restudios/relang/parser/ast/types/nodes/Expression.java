@@ -30,4 +30,5 @@ public abstract class Expression extends Node {
     public abstract Value eval(Context context);
 
     public abstract Type predictType(AnalyzerContext context);
+
 }

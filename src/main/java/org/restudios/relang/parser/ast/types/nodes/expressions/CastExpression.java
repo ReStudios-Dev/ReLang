@@ -1,6 +1,7 @@
 package org.restudios.relang.parser.ast.types.nodes.expressions;
 
 import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.values.ClassInstance;
@@ -33,6 +34,12 @@ public class CastExpression extends Expression {
 
     @Override
     public Type predictType(AnalyzerContext c) {
+        Type t = expression.predictType(c);
+        t.initClassOrType(c);
+        type.initClassOrType(c);
+        if(!t.canBe(type, true)){
+            throw new AnalyzerError("Invalid cast type", token);
+        }
         return type;
     }
 

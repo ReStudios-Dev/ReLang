@@ -20,8 +20,9 @@ public class OutputStatement extends Statement {
 
     @Override
     public void analyze(AnalyzerContext context) {
-        assert expression != null;
-        expression.predictType(context);
+        if(expression != null){
+            expression.predictType(context);
+        }
     }
 
     @Override

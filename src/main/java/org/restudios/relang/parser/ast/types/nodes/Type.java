@@ -6,10 +6,7 @@ import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.nodes.expressions.CastExpression;
 import org.restudios.relang.parser.ast.types.nodes.expressions.IdentifierExpression;
 import org.restudios.relang.parser.ast.types.values.*;
-import org.restudios.relang.parser.ast.types.values.values.CustomTypeValue;
-import org.restudios.relang.parser.ast.types.values.values.NullValue;
-import org.restudios.relang.parser.ast.types.values.values.TypeValue;
-import org.restudios.relang.parser.ast.types.values.values.Value;
+import org.restudios.relang.parser.ast.types.values.values.*;
 import org.restudios.relang.parser.ast.types.values.values.sll.classes.RLArray;
 import org.restudios.relang.parser.ast.types.values.values.sll.dynamic.DynamicSLLClass;
 import org.restudios.relang.parser.exceptions.RLException;
@@ -111,6 +108,9 @@ public class Type extends Node {
     }
 
     public boolean canBe(Type type){
+        return canBe(type, false);
+    }
+    public boolean canBe(Type type, boolean checkOverloads){
         if(type.clazz != null && type.clazz.getName().equals(DynamicSLLClass.OBJECT)) return true;
 
         if(isRunnable()){
@@ -149,6 +149,12 @@ public class Type extends Node {
             }
             return false;
         }else{
+
+            if(checkOverloads){
+                if(clazz.findExplicitOperator(type) != null) return true;
+                if(type.clazz.findImplicitOperator(this) != null) return true;
+            }
+
             if(type.isPrimitive)return false;
             return clazz
                     .isAssignableFrom(

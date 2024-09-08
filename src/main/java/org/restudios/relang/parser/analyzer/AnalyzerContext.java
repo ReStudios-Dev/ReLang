@@ -1,11 +1,9 @@
 package org.restudios.relang.parser.analyzer;
 
 import org.restudios.relang.parser.ast.types.nodes.Type;
-import org.restudios.relang.parser.ast.types.nodes.statements.ClassDeclarationStatement;
 import org.restudios.relang.parser.ast.types.nodes.statements.MethodDeclarationStatement;
 import org.restudios.relang.parser.ast.types.nodes.statements.VariableDeclarationStatement;
 import org.restudios.relang.parser.ast.types.values.Context;
-import org.restudios.relang.parser.ast.types.values.FunctionMethod;
 import org.restudios.relang.parser.ast.types.values.RLClass;
 
 import java.util.ArrayList;
@@ -20,6 +18,7 @@ public class AnalyzerContext {
     public List<MethodDeclarationStatement> methods = new ArrayList<>();
     public List<RLClass> classes = new ArrayList<>();
     public RLClass handlingClass;
+    private Type mustReturn;
 
     public AnalyzerContext(AnalyzerContext parent, Context root) {
         this.parent = parent;
@@ -35,6 +34,17 @@ public class AnalyzerContext {
                 aClass.getDeclaration().preload(aClass, root);
             }
         }
+    }
+
+    public Type getMustReturn() {
+        if(mustReturn == null && parent != null) return parent.getMustReturn();
+        return mustReturn;
+    }
+
+    public Type setMustReturn(Type inside) {
+        Type before = this.mustReturn;
+        this.mustReturn = inside;
+        return before;
     }
 
     public RLClass getHandlingClass() {

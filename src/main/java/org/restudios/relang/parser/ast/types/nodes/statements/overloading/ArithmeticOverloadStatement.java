@@ -1,6 +1,7 @@
 package org.restudios.relang.parser.ast.types.nodes.statements.overloading;
 
 import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.nodes.statements.BlockStatement;
 import org.restudios.relang.parser.ast.types.nodes.statements.OperatorOverloadStatement;
@@ -35,7 +36,12 @@ public class ArithmeticOverloadStatement extends OperatorOverloadStatement {
         for (VariableDeclarationStatement argument : arguments) {
             nc.putVariable(argument.variable, argument.type);
         }
+        Type before = context.setMustReturn(this.returingType);
         body.analyze(nc);
+        context.setMustReturn(before);
+        if(!body.hasReturnStatement()){
+            throw new AnalyzerError("The method must return "+returingType, token);
+        }
     }
 
     @Override

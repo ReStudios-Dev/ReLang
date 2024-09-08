@@ -77,4 +77,12 @@ public class BlockStatement extends Statement {
             statement.analyze(nc);
         }
     }
+
+    @Override
+    public boolean hasReturnStatement() {
+        for (Statement statement : statements) {
+            if(statement.hasReturnStatement()) return true;
+        }
+        return false;
+    }
 }

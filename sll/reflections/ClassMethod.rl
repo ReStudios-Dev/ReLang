@@ -4,8 +4,8 @@ public native abstract class ClassMethod {
     public readonly bool isStatic;
     public readonly bool isFinal;
 
-    public Type getReturnType() {} // todo
-    public array<Type> getArguments() {} // todo
+    //public Type getReturnType() {} // todo
+    //public array<Type> getArguments() {} // todo
 
     public str getHumanReadably(){
         str result;

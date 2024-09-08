@@ -77,7 +77,7 @@ public class ASTGenerator {
             eof = new Token(TokenType.EMPTY, "ast", "", 0, new LineCol(1,1), new LineCol(1,1));
         }else{
             Token last = tokens.get(tokens.size() - 1);
-            eof = new Token(TokenType.EMPTY, "ast", "", last.getPosition(), last.getFrom(), last.getTo());
+            eof = new Token(TokenType.EMPTY, "ast", "", last.getPosition(), last.getTo(), last.getTo());
         }
     }
     @SuppressWarnings("unused")
@@ -531,6 +531,9 @@ public class ASTGenerator {
 
     private ReturnStatement parseReturn() {
         Token pf = advance();
+        if(peek().type == TokenType.SEMICOLON){
+            return new ReturnStatement(pf, null);
+        }
         Expression exp = parseExpression();
         return new ReturnStatement(pf, exp);
     }
@@ -1373,7 +1376,7 @@ public class ASTGenerator {
                 Expression expression = this.parseExpression();
                 m.touch(expression);
                 this.consume(TokenType.CLOSE_PARENTHESES, "Expected ')' after expression.");
-                return marker.touch(new GroupingExpression(expression.token, expression));
+                return marker.touch(expression);
             }
         }
 

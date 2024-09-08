@@ -39,6 +39,10 @@ public class MethodCallStatement extends Statement {
         if(t == null){
             if(c.getHandlingClass() != null){
                 t = ClassInstance.findMethodFromNameAndArguments(method.token.string, types, c.getHandlingClass().getAllMethods(true, false, true), null, c);
+
+                if(t == null){
+                    t = ClassInstance.findMethodFromNameAndArguments(method.token.string, types, c.getHandlingClass().getStaticMethods(), null, c);
+                }
             }
         }
         if(t == null) throw new AnalyzerError("Method "+method.token.string+" not found", method.token);
@@ -111,6 +115,19 @@ public class MethodCallStatement extends Statement {
                 context.removeTrace(elem);
                 context.setStaticCall(bef);
                 return v;
+            }
+        }
+        RLClass ci = context.thisClass() != null ? context.thisClass().getRLClass() : context.getStaticCall();
+
+        if(ci != null){
+            for (FunctionMethod staticMethod : ci.getStaticMethods()) {
+                if(staticMethod.canBeExecuted(values, context)){
+                    RLClass bef = context.setStaticCall(null);
+                    Value v =  staticMethod.runMethod(ci.getStaticContext(), context, values);
+                    context.removeTrace(elem);
+                    context.setStaticCall(bef);
+                    return v;
+                }
             }
         }
         throw new RLException("Method " + method.token.string + " not found", Type.internal(context), context);
