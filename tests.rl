@@ -218,3 +218,12 @@ if(i == 10){
 }
 
 // /LAMBDA
+
+// INLINE IF
+int b = true != 2 ? 1 : 2;
+if(b == 1){
+    out "[ok] inline if";
+}else{
+    err "[err] inline if";
+}
+// /INLINE IF

@@ -1063,7 +1063,20 @@ public class ASTGenerator {
                 }
             };
         }
-        return parseInstanceOf();
+        return parseInlineIf();
+    }
+
+    private Expression parseInlineIf() {
+        PsiMarker marker = listener.mark();
+        Token pf = peek();
+        Expression cond = parseInstanceOf();
+        if (match(TokenType.QUESTION_MARK)) {
+            Expression body = parseExpression();
+            consume(TokenType.COLON, "Expected : (else branch)");
+            Expression elseBranch = parseExpression();
+            return marker.touch(new InlineIfExpression(pf, cond, body, elseBranch));
+        }
+        return marker.touch(cond);
     }
     private Expression parseInstanceOf(){
         Expression left = parseCasting();
@@ -1528,7 +1541,12 @@ public class ASTGenerator {
         return tokens.get(current + step);
     }
     private Token peekSafe(int step) {
-        return Objects.requireNonNull(tokens.get(current + step));
+        try {
+            return tokens.get(current + step);
+        }catch (IndexOutOfBoundsException ignored){
+            unexpectedToken(eof);
+            return null;
+        }
     }
 
     private Token previous() {

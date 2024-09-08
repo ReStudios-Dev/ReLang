@@ -3,6 +3,7 @@ package org.restudios;
 import org.restudios.relang.ClassPath;
 import org.restudios.relang.ReLang;
 import org.restudios.relang.parser.analyzer.AnalyzerError;
+import org.restudios.relang.parser.ast.ASTError;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,16 +22,18 @@ public class Main {
 
         for (Map.Entry<String, String> entry : map.entrySet()) {
             relang.getClassLoader().addClassPath(new ClassPath(entry.getKey(), entry.getValue()));
-        } 
-        relang.prepare();
-
-        try {
-            relang.analyze();
-        }catch (AnalyzerError error){
-            error.printStackTrace(System.err);
         }
 
-        int exitCode = relang.run();
+        int exitCode = 1;
+
+
+        try {
+            relang.prepare();
+            relang.analyze();
+            exitCode = relang.run();
+        } catch (AnalyzerError | ASTError error){
+            error.printStackTrace(System.err);
+        }
 
         System.out.println();
         System.out.println("----------");

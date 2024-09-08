@@ -52,7 +52,7 @@ public class MethodCallStatement extends Statement {
 
     @Override
     public void analyze(AnalyzerContext context) {
-
+        predictType(context);
     }
 
     public Value fromClassInstance(Token token, Context context, ClassInstance ci){
