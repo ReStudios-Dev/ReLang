@@ -398,7 +398,7 @@ public class DynamicValues {
     }
     public static ArrayList<SLLMethod> ClassMethod(DynamicSLLClass ci) {
         ArrayList<SLLMethod> methods = new ArrayList<>();
-        methods.add(new SLLMethod(
+        /*methods.add(new SLLMethod(
                 "getReturnType", false,
                 (arguments, context, callContext, clazz) -> {
                     return new NullValue(); // todo
@@ -409,7 +409,7 @@ public class DynamicValues {
                 (arguments, context, callContext, clazz) -> {
                     return new NullValue(); // todo
                 }
-        , ci, ci.getCreatedContext()));
+        , ci, ci.getCreatedContext()));*/
 
 
 

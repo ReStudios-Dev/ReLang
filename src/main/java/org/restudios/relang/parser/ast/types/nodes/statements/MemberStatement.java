@@ -3,6 +3,7 @@ package org.restudios.relang.parser.ast.types.nodes.statements;
 import org.restudios.relang.parser.analyzer.AnalyzerContext;
 import org.restudios.relang.parser.analyzer.AnalyzerError;
 import org.restudios.relang.parser.ast.types.Primitives;
+import org.restudios.relang.parser.ast.types.Visibility;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 import org.restudios.relang.parser.ast.types.nodes.Type;
@@ -55,11 +56,21 @@ public class MemberStatement extends Statement  {
         }
         IdentifierExpression variable = (IdentifierExpression) right;
         for (UnInitializedVariable clazzVariable : l.clazz.getVariables()) {
+            boolean staticVariable = clazzVariable.getVisibilities().contains(Visibility.STATIC);
+            boolean staticCall = !l.isInstance();
+            if(staticVariable != staticCall){
+                continue;
+            }
             if(clazzVariable.getName().equals(variable.value)){
                 return clazzVariable.getType();
             }
         }
-        return super.predictType(c);
+        for (RLClass subClass : l.clazz.getSubClasses()) {
+            if(variable.value.equals(subClass.getName())){
+                return subClass.type();
+            }
+        }
+        throw new AnalyzerError("Variable "+variable.value+" not found", variable.token);
     }
 
     @Override

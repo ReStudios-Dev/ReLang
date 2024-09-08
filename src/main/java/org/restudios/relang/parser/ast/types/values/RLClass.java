@@ -283,11 +283,7 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
                 names.add(method.name);
             }
             if(!names.isEmpty()){
-                try {
-                    throw new RLException("Unimplemented methods: "+names, Type.internal(context), context);
-                }catch (Exception e){
-                    throw new RuntimeException("Unimplemented methods: "+names+" ["+this.name+"]");
-                }
+                throw new RLException("Unimplemented methods: "+names, Type.internal(context), context);
             }
         }
         ArrayList<FunctionMethod> fa = getOverridableMethods(false);
@@ -514,7 +510,9 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
 
     @Override
     public Type type() {
-        return new Type(null, subTypes(), this);
+        Type t = new Type(null, subTypes(), this);
+        t.setInstance(false);
+        return t;
     }
 
     @Override

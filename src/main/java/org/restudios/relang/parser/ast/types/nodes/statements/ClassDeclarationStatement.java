@@ -56,15 +56,24 @@ public class ClassDeclarationStatement extends DeclarationStatement {
         if(extending != null){
             Type ext = extending.predictType(context);
             if(!ext.isCustomType()) throw new AnalyzerError("Cannot extend non class", extending.token);
+            RLClass ec = ext.clazz;
+            if(type == ClassType.INTERFACE && !ec.isInterface()) {
+                throw new AnalyzerError("Interfaces cannot extend non interface", extending.token);
+            }
+            if(type != ClassType.INTERFACE && ec.isInterface()){
+                throw new AnalyzerError("Regular classes cannot extend interfaces", extending.token);
+            }
         }
         for (Expression implementation : implementations) {
+            if(type == ClassType.INTERFACE) throw new AnalyzerError("Interfaces cannot implement other classes", implementation.token);
             Type imp = implementation.predictType(context);
             if(!imp.isCustomType()) throw new AnalyzerError("Cannot implement non class", implementation.token);
+            if(!imp.clazz.isInterface()) throw new AnalyzerError("Cannot implement non interface", implementation.token);
         }
 
         AnalyzerContext initContext = context.create();
         initContext.setHandlingClass(context.getClass(name));
-        initContext.putVariable("this", context.getClass(name).type());
+        //initContext.putVariable("this", context.getClass(name).type());
         for (ClassDeclarationStatement aClass : body.classes) {
             aClass.analyze(initContext);
         }

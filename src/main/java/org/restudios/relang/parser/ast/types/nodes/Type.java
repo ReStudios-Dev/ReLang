@@ -24,6 +24,7 @@ public class Type extends Node {
     public boolean isPrimitive;
     public Primitives primitive;
     public final List<Type> subTypes;
+    private boolean isInstance;
     private Type(Token token, ArrayList<Type> subTypes) {
         super(token);
         this.subTypes = subTypes;
@@ -63,6 +64,15 @@ public class Type extends Node {
     @SuppressWarnings("MethodDoesntCallSuperMethod")
     public Type clone(){
         return new Type(token, type, clazz, isPrimitive, primitive, subTypes.stream().map(Type::clone).collect(Collectors.toList()));
+    }
+
+    public boolean isInstance() {
+        return isInstance;
+    }
+
+    public Type setInstance(boolean instance) {
+        isInstance = instance;
+        return this;
     }
 
     public static Type clazz(RLClass clazz){

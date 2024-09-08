@@ -32,8 +32,14 @@ public class IdentifierExpression extends Expression {
     @Override
     public Type predictType(AnalyzerContext context) {
         Type t = context.getVariable(value);
+        if(value.equals("this")) {
+            Type ta = context.getHandlingClass().type();
+            ta.setInstance(true);
+            return ta;
+        }
         if(t != null){
             t.initClassOrType(context);
+            t.setInstance(true);
             return t;
         }
         RLClass cds = context.getClass(value);
@@ -45,6 +51,7 @@ public class IdentifierExpression extends Expression {
                 if(unInitializedVariable.getName().equals(value)) {
                     t = unInitializedVariable.getType();
                     t.initClassOrType(context);
+                    t.setInstance(true);
                     return t;
                 }
             }

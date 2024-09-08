@@ -46,6 +46,7 @@ public class MethodCallStatement extends Statement {
             }
         }
         if(t == null) throw new AnalyzerError("Method "+method.token.string+" not found", method.token);
+        t.setInstance(true);
         return t;
     }
 
