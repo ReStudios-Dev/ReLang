@@ -63,11 +63,11 @@ public class LexerV2 {
         Token characterLiteral = parseLiteralCharacter(buff);
         if(characterLiteral != null) return characterLiteral;
 
-        Token integerLiteral = parseIntegerLiteral(buff);
-        if(integerLiteral != null) return integerLiteral;
-
         Token floatLiteral = parseFloatLiteral(buff);
         if(floatLiteral != null) return floatLiteral;
+
+        Token integerLiteral = parseIntegerLiteral(buff);
+        if(integerLiteral != null) return integerLiteral;
 
         Token special = parseSpecial(buff);
         if(special != null) return special;

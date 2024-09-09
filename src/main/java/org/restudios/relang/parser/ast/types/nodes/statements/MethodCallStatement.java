@@ -2,11 +2,13 @@ package org.restudios.relang.parser.ast.types.nodes.statements;
 
 import org.restudios.relang.parser.analyzer.AnalyzerContext;
 import org.restudios.relang.parser.analyzer.AnalyzerError;
+import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.Visibility;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.nodes.expressions.CastExpression;
+import org.restudios.relang.parser.ast.types.nodes.expressions.LambdaExpression;
 import org.restudios.relang.parser.ast.types.values.*;
 import org.restudios.relang.parser.ast.types.values.values.Value;
 import org.restudios.relang.parser.ast.types.values.values.sll.classes.RLRunnable;
@@ -34,7 +36,19 @@ public class MethodCallStatement extends Statement {
         for (Expression argument : arguments) {
             types.add(argument.predictType(c));
         }
-
+        Type ta = null;
+        if(method instanceof Statement){
+            ((Statement) method).analyze(c);
+        }
+        try {
+            ta = method.predictType(c);
+            if(ta != null){
+                ta.initClassOrType(c);
+                if(ta.isRunnable()){
+                    return ta.subTypes.get(0);
+                }
+            }
+        } catch (AnalyzerError ignored) {}
         Type t = c.getMethod(method.token.string, types);
         if(t == null){
             if(c.getHandlingClass() != null){

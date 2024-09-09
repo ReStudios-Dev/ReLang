@@ -27,6 +27,7 @@ public class ReturnStatement extends Statement {
         Type mustReturn = context.getMustReturn();
         mustReturn.initClassOrType(context);
         Type returned = expression == null ? Primitives.VOID.type() : expression.predictType(context);
+        returned.initClassOrType(context);
         if(!returned.canBe(mustReturn, true)){
             throw new AnalyzerError("The return type must be "+mustReturn, expression == null ? token : expression.token);
         }

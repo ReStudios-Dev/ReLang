@@ -28,6 +28,10 @@ public class UnaryImplicitExpression extends ImplicitExpression {
     @Override
     public Type predictType(AnalyzerContext c) {
         // TODO PREDICT TYPE
+        Type t = expression.predictType(c);
+        if(t.isArray()){
+            return t.subTypes.get(0);
+        }
         return Primitives.NULL.type();
     }
 

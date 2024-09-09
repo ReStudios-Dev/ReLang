@@ -32,7 +32,9 @@ public class ClassInstantiationStatement extends Statement {
 
     @Override
     public Type predictType(AnalyzerContext c) {
-        return clazz.predictType(c);
+        Type t = clazz.predictType(c);
+        t.setInstance(true);
+        return t;
     }
 
     @Override

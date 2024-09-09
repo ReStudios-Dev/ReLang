@@ -42,7 +42,7 @@ public class VariableDeclarationStatement extends Statement {
         if (value != null){
             Type t = value.predictType(context);
             if(!t.canBe(type)){
-                throw new AnalyzerError("Invalid assigment value", value.token);
+                throw new AnalyzerError("Invalid assigment value ("+type+" = "+t+")", value.token);
             }
         }
     }

@@ -38,7 +38,7 @@ public class AssigmentStatement extends Statement {
         Type assign = value.predictType(context);
         variable.initClassOrType(context);
         assign.initClassOrType(context);
-        if(!assign.canBe(variable)) throw new AnalyzerError("Invalid assigment type", value.token);
+        if(!assign.canBe(variable, true)) throw new AnalyzerError("Invalid assigment type ("+variable+" = "+assign+")", value.token);
     }
 
     @Override

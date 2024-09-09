@@ -1,6 +1,7 @@
 package org.restudios.relang.parser.ast.types.nodes.expressions;
 
 import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
 import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Type;
@@ -13,6 +14,10 @@ import org.restudios.relang.parser.ast.types.values.values.TBooleanValue;
 import org.restudios.relang.parser.ast.types.values.values.Value;
 import org.restudios.relang.parser.exceptions.RLException;
 import org.restudios.relang.parser.tokens.Token;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class LogicalExpression extends Expression {
     public final Expression left;
@@ -28,25 +33,81 @@ public class LogicalExpression extends Expression {
 
     @Override
     public Type predictType(AnalyzerContext context) {
+        Type left = this.left.predictType(context);
+        Type right = this.right.predictType(context);
+
+        left.initClassOrType(context);
+        right.initClassOrType(context);
+
+        switch (operator) {
+            case ">":
+            case "<":
+            case ">=":
+            case "<=":
+                if(!left.isCustomType() && !right.isCustomType()){
+                    if(left.primitive == Primitives.INTEGER){
+                        if(right.primitive == Primitives.INTEGER || right.primitive == Primitives.FLOAT) return Primitives.BOOL.type();
+                    }else if(left.primitive == Primitives.FLOAT){
+                        if(right.primitive == Primitives.INTEGER || right.primitive == Primitives.FLOAT) return Primitives.BOOL.type();
+                    }
+                }else{
+                    if(left.isInstance() && right.isInstance()){
+                        FunctionMethod fm = left.clazz.findBinaryOperator(operator, left, right);
+                        if(fm != null) return fm.getReturnType();
+                        fm = right.clazz.findBinaryOperator(operator, left, right);
+                        if(fm != null) return fm.getReturnType();
+                    }else{
+                        throw new AnalyzerError("Cannot process non instances", token);
+                    }
+                }
+            case "||":
+            case "&&":
+                if(left.primitive != Primitives.BOOL || right.primitive != Primitives.BOOL){
+                    throw new AnalyzerError("Cannot compare non boolean values", token);
+                }
+            case "==":
+            case "!=":
+                return Primitives.BOOL.type();
+            case "instanceof":
+                if(!left.isCustomType() || !left.isInstance() || !right.isCustomType() || right.isInstance()){
+                    throw new AnalyzerError("Instanceof can compare instance with class (myInstance instanceof MyClass)", left.token);
+                }
+        }
         return Primitives.BOOL.type();
     }
 
     @Override
     public Value eval(Context context) {
         Value l = left.eval(context).initContext(context).finalExpression();
+        Value r = right.eval(context).initContext(context).finalExpression();
+        List<String> overloadable = Arrays.asList(">", "<", ">=", "<=");
+        if(overloadable.contains(this.operator)){
+            if(l instanceof ClassInstance && r instanceof ClassInstance){
+                ClassInstance lci = (ClassInstance) l;
+                ClassInstance rci = (ClassInstance) r;
+                FunctionMethod fm = lci.getRLClass().findBinaryOperator(operator, lci.type(), rci.type());
+                if(fm != null){
+                    return fm.runMethod(lci.getContext(), context, l, r);
+                }
+                fm = rci.getRLClass().findBinaryOperator(operator, lci.type(), rci.type());
+                if(fm != null){
+                    return fm.runMethod(lci.getContext(), context, l, r);
+                }
+            }
+        }
         switch (operator) {
             case ">":
-                return parseGreater(l, context);
+                return parseGreater(l, r, context);
             case "<":
-                return parseLess(l, context);
+                return parseLess(l, r, context);
+            case ">=":
+                return parseGreaterOrEqual(l, r, context);
+            case "<=":
+                return parseLessOrEqual(l, r, context);
             case "||":
                 return parseOr(l, context);
             case "&&":
                 return parseAnd(l, context);
-            case ">=":
-                return parseGreaterOrEqual(l, context);
-            case "<=":
-                return parseLessOrEqual(l, context);
             case "==":
                 return parseEquality(l, context);
             case "!=":
@@ -89,7 +150,7 @@ public class LogicalExpression extends Expression {
                             double rightFloat = r.floatValue();
                             return new BooleanValue(leftInt == rightFloat);
                         default:
-                            throw new RLException("Could operate integer with "+right.displayName(), Type.internal(context), context);
+                            return Value.value(false);
                     }
                 case FLOAT:
                     double leftFloat = l.floatValue();
@@ -102,11 +163,11 @@ public class LogicalExpression extends Expression {
                             double rightFloat = r.floatValue();
                             return new BooleanValue(leftFloat == rightFloat);
                         default:
-                            return new BooleanValue(false);
+                            return Value.value(false);
                             //throw new RLException("Could operate integer with "+right.displayName(), Type.internal(context));
                     }
                 default:
-                    return new BooleanValue(false);
+                    return Value.value(false);
                     //throw new RLException("Could operate "+left.displayName()+" with "+right.displayName(), Type.internal(context));
             }
         }else{
@@ -116,7 +177,7 @@ public class LogicalExpression extends Expression {
                 Value bv = fm.runMethod(((ClassInstance) l).getContext(), context, r);
                 return new BooleanValue(bv.booleanValue());
             }
-            throw new RLException("Could operate "+l.type().displayName()+" with "+r.type().displayName(), Type.internal(context), context);
+            return Value.value(false);
 
         }
     }
@@ -153,7 +214,7 @@ public class LogicalExpression extends Expression {
                             double rightFloat = r.floatValue();
                             return new BooleanValue(leftInt != rightFloat);
                         default:
-                            throw new RLException("Could operate integer with "+right.displayName(), Type.internal(context), context);
+                            return Value.value(false);
                     }
                 case FLOAT:
                     double leftFloat = l.floatValue();
@@ -166,26 +227,26 @@ public class LogicalExpression extends Expression {
                             double rightFloat = r.floatValue();
                             return new BooleanValue(leftFloat != rightFloat);
                         default:
-                            throw new RLException("Could operate integer with "+right.displayName(), Type.internal(context), context);
+                            return Value.value(false);
                     }
                 case NULL:
                     return new BooleanValue(right.primitive != Primitives.NULL);
                 default:
-                    throw new RLException("Could operate "+left.displayName()+" with "+right.displayName(), Type.internal(context), context);
+                    return Value.value(false);
             }
         }else{
-            throw new RLException("Could operate "+l.type().displayName()+" with "+r.type().displayName(), Type.internal(context), context);
+            return Value.value(false);
         }
     }
-    private Value parseLessOrEqual(Value l, Context context) {
+    private Value parseLessOrEqual(Value l, Value right, Context context) {
         double leftSide = l.floatValue();
-        double rightSide = right.eval(context).floatValue();
+        double rightSide = right.floatValue();
         return new BooleanValue(leftSide <= rightSide);
 
     }
-    private Value parseGreaterOrEqual(Value l, Context context) {
+    private Value parseGreaterOrEqual(Value l, Value right, Context context) {
         double leftSide = l.floatValue();
-        double rightSide = right.eval(context).floatValue();
+        double rightSide = right.floatValue();
         return new BooleanValue(leftSide >= rightSide);
 
     }
@@ -202,14 +263,14 @@ public class LogicalExpression extends Expression {
         return new BooleanValue(rightSide);
 
     }
-    private Value parseLess(Value l, Context context) {
+    private Value parseLess(Value l, Value right, Context context) {
         double leftSide = l.floatValue();
-        double rightSide = right.eval(context).floatValue();
+        double rightSide = right.floatValue();
         return new BooleanValue(leftSide < rightSide);
     }
-    private Value parseGreater(Value l, Context context) {
+    private Value parseGreater(Value l, Value right, Context context) {
         double leftSide = l.floatValue();
-        double rightSide = right.eval(context).floatValue();
+        double rightSide = right.floatValue();
         return new BooleanValue(leftSide > rightSide);
 
     }

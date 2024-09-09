@@ -15,6 +15,7 @@ public class Main {
 
         ReLang relang = new ReLang();
         relang.setDebug(false);
+
         relang.setOutput(System.out, System.err);
 
         Map<String, String> map = Loader.load(new File("sll"));

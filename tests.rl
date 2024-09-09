@@ -195,6 +195,7 @@ Runnable<int> sf = () -> {
     return 'a' + 'b' + 'c';
 };
 
+
 if(sf() == 117){
     out "[ok] lambda";
 }
@@ -210,7 +211,7 @@ public int multiply(Sum sumManager, int first, int second, int power){
     return sumManager.sum(first, second) * power;
 }
 
-int i = multiply(  (int first, int second) -> first + second  ,   2, 3,   2);
+int i = multiply(  (int first, int second) -> first + second,  2, 3,  2);
 if(i == 10){
     out "[ok] lambda to interface";
 }else {
@@ -227,3 +228,17 @@ if(b == 1){
     err "[err] inline if";
 }
 // /INLINE IF
+
+// ARRAYS
+
+array<int> g = [1, 2];
+
+g[0] = 2;
+
+if(g[0] == 2){
+    out "[ok] arrays";
+}else{
+    err "[err] arrays";
+}
+
+// /ARRAYS

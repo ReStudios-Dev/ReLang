@@ -161,8 +161,8 @@ public class Type extends Node {
         }else{
 
             if(checkOverloads){
-                if(clazz.findExplicitOperator(type) != null) return true;
-                if(type.clazz.findImplicitOperator(this) != null) return true;
+                if(clazz != null && clazz.findExplicitOperator(type) != null) return true;
+                if(type.clazz != null && type.clazz.findImplicitOperator(this) != null) return true;
             }
 
             if(type.isPrimitive)return false;
@@ -386,5 +386,9 @@ public class Type extends Node {
 
     public boolean isString() {
         return this.isCustomType() && this.clazz.getName().equals(DynamicSLLClass.STRING);
+    }
+
+    public boolean isArray() {
+        return this.clazz != null && this.clazz.getName().equals(DynamicSLLClass.ARRAY);
     }
 }

@@ -52,8 +52,8 @@ public class LambdaExpression extends Statement {
         for (VariableDeclarationStatement argument : arguments) {
             nc.putVariable(argument);
         }
-        if(byBody) body.analyze(nc);
-        else expression.predictType(nc);
+        if(body != null) body.analyze(nc);
+        if(expression != null) expression.predictType(nc);
     }
 
     public Value typeEval(Context context, Type type){
