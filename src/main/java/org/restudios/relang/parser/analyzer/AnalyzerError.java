@@ -14,6 +14,7 @@ public class AnalyzerError extends RuntimeException{
 
     @Override
     public void printStackTrace(PrintStream s) {
+        if(token == null) throw new RuntimeException(this);
         s.println("[ANALYZER "+token.stringify()+"] "+getMessage());
     }
 }

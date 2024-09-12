@@ -4,7 +4,6 @@ import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
-import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -29,7 +28,6 @@ public class Main {
         }).toList());*/
         List<ClassNode> classes = new ArrayList<>();
 
-        classes.add(new ClassNode(Player.class));
 
         String result = classes.stream().map(classNode -> String.join("\n", classNode.stringify())).collect(Collectors.joining("\n\n"));
         Files.writeString(Path.of("C:\\Users\\swimery\\IdeaProjects\\ReLang\\BukkitPluginLoader\\src\\main\\resources\\player.rl"), result);

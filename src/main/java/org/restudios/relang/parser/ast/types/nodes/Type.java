@@ -1,6 +1,7 @@
 package org.restudios.relang.parser.ast.types.nodes;
 
 import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
 import org.restudios.relang.parser.ast.types.Node;
 import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.nodes.expressions.CastExpression;
@@ -24,6 +25,7 @@ public class Type extends Node {
     public boolean isPrimitive;
     public Primitives primitive;
     public final List<Type> subTypes;
+    public TypeSubType subtype;
     private boolean isInstance;
     private Type(Token token, ArrayList<Type> subTypes) {
         super(token);
@@ -117,11 +119,18 @@ public class Type extends Node {
         return new ArrayList<>(Arrays.asList(types));
     }
 
+    public boolean hardCanBe(Type type){
+        if(canBe(type, true)) return true;
+        return clazz != null && clazz.getName().equals(DynamicSLLClass.OBJECT);
+    }
     public boolean canBe(Type type){
         return canBe(type, false);
     }
     public boolean canBe(Type type, boolean checkOverloads){
         if(type.clazz != null && type.clazz.getName().equals(DynamicSLLClass.OBJECT)) return true;
+
+        if(type.subtype != null && subtype != null && subtype.compare(type.subtype)) return true;
+        if((type.subtype == null) != (subtype == null)) return false;
 
         if(isRunnable()){
             if(type.clazz != null){
@@ -173,6 +182,7 @@ public class Type extends Node {
     }
     public String displayName(){
         if(isPrimitive){
+            if(primitive == Primitives.TYPE) return subtype.name;
             return primitive.name().toLowerCase();
         }else{
             if(clazz == null && type == null){
@@ -307,18 +317,22 @@ public class Type extends Node {
                     for (CustomTypeValue subType : ci.getSubTypes()) {
                         if(token == null) continue;
                         if(subType.name.equals(token.string)){
-                            clazz = subType.value.clazz;
+                            clazz = null;
                             type = subType.value.type;
                             isPrimitive = true;
                             primitive = Primitives.TYPE;
+                            this.subtype = new TypeSubType(subType.name, ci);
                         }
                     }
                 }
             }
         }
+        for (Type subType : subTypes) {
+            subType.initClassOrType(context);
+        }
     }
     public void initClassOrType(AnalyzerContext context, Type handling) {
-        if((primitive == Primitives.NULL || primitive == null) && clazz == null){
+        if((primitive == Primitives.NULL || primitive == Primitives.TYPE || primitive == null) && clazz == null){
             if(token != null && context.containsClass(token.string)){
                 clazz = context.getClass(token.string);
                 type = new IdentifierExpression(token, token.string);
@@ -336,6 +350,7 @@ public class Type extends Node {
                         type = value.type;
                         isPrimitive = true;
                         primitive = Primitives.TYPE;
+                        subtype = new TypeSubType(name, value.clazz);
                     }
                 }
 
@@ -385,10 +400,48 @@ public class Type extends Node {
     }
 
     public boolean isString() {
-        return this.isCustomType() && this.clazz.getName().equals(DynamicSLLClass.STRING);
+        return this.isCustomType() && this.primitive != Primitives.TYPE && this.clazz.getName().equals(DynamicSLLClass.STRING);
     }
 
     public boolean isArray() {
         return this.clazz != null && this.clazz.getName().equals(DynamicSLLClass.ARRAY);
+    }
+
+    public void applySubTypes(List<Type> types) {
+        this.subTypes.clear();
+        this.subTypes.addAll(types);
+    }
+
+    public Type getSubType(String typename) {
+        int item = -1;
+        boolean found = false;
+        for (CustomTypeValue subType : clazz.getSubTypes()) {
+            item++;
+            if(subType.name.equals(typename)){
+                found = true;
+                break;
+            }
+        }
+        if(!found) throw new AnalyzerError("Cant find sub type", token);
+        return subTypes.get(item);
+    }
+
+    public RLClass getItClass(AnalyzerContext context) {
+        if(primitive == Primitives.TYPE) return context.getClass(DynamicSLLClass.OBJECT);
+        return clazz;
+    }
+
+    public RLClass getItClass(Context context) {
+        if(primitive == Primitives.TYPE) return context.getClass(DynamicSLLClass.OBJECT);
+        return clazz;
+    }
+
+    public boolean isSubType() {
+        return this.subtype != null;
+    }
+
+    public Type getSubTypeValue(Type leftType) {
+        if(!isSubType()) return null;
+        return leftType.getSubType(subtype.name);
     }
 }

@@ -19,12 +19,6 @@ public class RLRunnable extends SLLClassInstance {
 
     }
 
-
-    @Override
-    public String toString() {
-        return "<runnable>";
-    }
-
     @Override
     public int intValue() {
         return -1;

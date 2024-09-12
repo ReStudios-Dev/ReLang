@@ -2,6 +2,7 @@ package org.restudios.relang.parser.ast.types.nodes.expressions;
 
 import org.restudios.relang.parser.analyzer.AnalyzerContext;
 import org.restudios.relang.parser.analyzer.AnalyzerError;
+import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.values.ClassInstance;
@@ -37,7 +38,7 @@ public class CastExpression extends Expression {
         Type t = expression.predictType(c);
         t.initClassOrType(c);
         type.initClassOrType(c);
-        if(!t.canBe(type, true)){
+        if(!t.hardCanBe(type)){
             throw new AnalyzerError("Invalid cast type", token);
         }
         return type;
@@ -61,7 +62,7 @@ public class CastExpression extends Expression {
                             Type t = castToType.subTypes.get(i);
                             t.init(context);
                             if (!t.canBe(cst.value)) {
-                                success = false;
+                                // success = false;
                                 break;
                             }
                         }
@@ -69,7 +70,7 @@ public class CastExpression extends Expression {
                             if(ci.isRunnable() && castToType.isRunnable()){
                                 ((RLRunnable) ci).setReturn(castToType.subTypes.get(0));
                             }
-                            return ci;//ci.cast(castToType, context);
+                            return ci;// ci.cast(castToType, context);
                         }else{
                             throw new RLException("Cannot cast "+valueToCast.type().displayName()+" to "+castToType.displayName(), Type.castException(context), context);
                         }
@@ -89,6 +90,7 @@ public class CastExpression extends Expression {
                                 FunctionArgument to = toArg.get(i);
                                 from.type.init(context);
                                 to.type.init(context);
+                                if(to.type.primitive == Primitives.TYPE) continue;
                                 if(!from.type.canBe(to.type)){
                                     suc = false;
                                     break;
@@ -128,7 +130,8 @@ public class CastExpression extends Expression {
             if(overload != null) return overload.runMethod(ci.getRLClass().getStaticContext(), context, valueToCast);
         }
         if(castToType.isCustomType()){
-            RLClass clazz = castToType.clazz;
+            RLClass clazz = castToType.getItClass(context);
+
             CastOperatorOverloadFunctionMethod overload = clazz.findImplicitOperator(valueToCast.type());
             if(overload != null) return overload.runMethod(clazz.getStaticContext(), context, valueToCast);
         }
@@ -136,7 +139,7 @@ public class CastExpression extends Expression {
         if(valueToCast.type().like(castToType)){
             return valueToCast;
         }
-        if(!valueToCast.type().canBe(castToType)){
+        if(!valueToCast.type().canBe(castToType) && castToType.primitive != Primitives.TYPE){
             throw new RLException("Cannot cast "+valueToCast.type().displayName()+" to "+castToType.displayName(), Type.castException(context), context);
         }
         return valueToCast;

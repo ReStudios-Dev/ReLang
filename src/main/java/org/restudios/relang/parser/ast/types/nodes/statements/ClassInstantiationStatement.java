@@ -6,6 +6,8 @@ import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.nodes.expressions.IdentifierExpression;
+import org.restudios.relang.parser.ast.types.values.ClassInstance;
+import org.restudios.relang.parser.ast.types.values.FunctionMethod;
 import org.restudios.relang.parser.ast.types.values.RLClass;
 import org.restudios.relang.parser.ast.types.values.Context;
 import org.restudios.relang.parser.ast.types.values.values.NullValue;
@@ -17,6 +19,7 @@ import org.restudios.relang.parser.utils.RLStackTraceElement;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ClassInstantiationStatement extends Statement {
     public final Expression clazz;
@@ -33,6 +36,22 @@ public class ClassInstantiationStatement extends Statement {
     @Override
     public Type predictType(AnalyzerContext c) {
         Type t = clazz.predictType(c);
+        t.applySubTypes(this.types);
+        if(!t.isCustomType()) throw new AnalyzerError("Can't instantiate non class", clazz.token);
+        t.initClassOrType(c);
+        RLClass clazz = t.clazz;
+
+
+        try {
+            FunctionMethod fm = ClassInstance.findConstructor(args.stream().map(expression -> expression.predictType(c)).collect(Collectors.toList()), t, c);
+        } catch (RuntimeException e) {
+            if(e.getMessage().equals("CCNF")){
+                throw new AnalyzerError("Can't find constructor with received parameters", token);
+            }else{
+                throw e;
+            }
+        }
+
         t.setInstance(true);
         return t;
     }

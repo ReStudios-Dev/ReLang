@@ -52,10 +52,10 @@ public class MethodCallStatement extends Statement {
         Type t = c.getMethod(method.token.string, types);
         if(t == null){
             if(c.getHandlingClass() != null){
-                t = ClassInstance.findMethodFromNameAndArguments(method.token.string, types, c.getHandlingClass().getAllMethods(true, false, true), null, c);
+                t = ClassInstance.findMethodFromNameAndArguments(method.token.string, types, c.getHandlingClass().type(), null, c, false);
 
                 if(t == null){
-                    t = ClassInstance.findMethodFromNameAndArguments(method.token.string, types, c.getHandlingClass().getStaticMethods(), null, c);
+                    t = ClassInstance.findMethodFromNameAndArguments(method.token.string, types, c.getHandlingClass().type(), null, c, true);
                 }
             }
         }
@@ -123,7 +123,6 @@ public class MethodCallStatement extends Statement {
             }
         }
         for (FunctionMethod method : context.getMethods(method.token.string)) {
-
             if(method.canBeExecuted(values, context)) {
                 RLClass bef = context.setStaticCall(null);
                 Value v =  method.runMethod(context, context, values);

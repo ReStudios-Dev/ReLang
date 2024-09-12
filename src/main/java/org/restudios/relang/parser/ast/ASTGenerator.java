@@ -719,10 +719,7 @@ public class ASTGenerator {
         PsiMarker marker = listener.mark();
         Type type = parseType(nullOnError);
         Token name = null;
-        boolean varargs = false;
-        if(match(TokenType.TRIPLE_DOT)){
-            varargs = true;
-        }
+        boolean varargs = match(TokenType.TRIPLE_DOT);
 
         if (!match(TokenType.IDENTIFIER)) {
             if (nullOnError) return null;

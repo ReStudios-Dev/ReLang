@@ -8,6 +8,7 @@ import org.restudios.relang.parser.ast.types.nodes.Expression;
 import org.restudios.relang.parser.ast.types.nodes.Statement;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.nodes.expressions.CastExpression;
+import org.restudios.relang.parser.ast.types.values.ClassInstance;
 import org.restudios.relang.parser.ast.types.values.Variable;
 import org.restudios.relang.parser.ast.types.values.Context;
 import org.restudios.relang.parser.ast.types.values.values.NullValue;
@@ -41,7 +42,7 @@ public class VariableDeclarationStatement extends Statement {
         type.initClassOrType(context);
         if (value != null){
             Type t = value.predictType(context);
-            if(!t.canBe(type)){
+            if(!t.canBe(type, true)){
                 throw new AnalyzerError("Invalid assigment value ("+type+" = "+t+")", value.token);
             }
         }

@@ -656,7 +656,7 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
         return subClasses;
     }
 
-    public ArrayList<UnInitializedVariable> getVariables() {
+    public List<UnInitializedVariable> getVariables() {
         return variables;
     }
 
@@ -768,5 +768,9 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
 
         }
         return result;
+    }
+
+    public FunctionMethod findMethod(String name, Context context, Value... arguments) {
+        return ClassInstance.findMethodFromNameAndArguments(name, arguments, getAllMethods(true, false, true), context, null);
     }
 }

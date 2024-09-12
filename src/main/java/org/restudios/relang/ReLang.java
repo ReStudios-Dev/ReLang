@@ -17,6 +17,7 @@ import org.restudios.relang.parser.utils.RLOutput;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -153,6 +154,12 @@ public class ReLang {
             ArrayList<ClassPath> classPaths = classLoader.getClassPaths();
             this.preparedCode = prepare(classPaths);
         }
+    }
+    public void prepare(ClassPath classPath){
+        if(this.preparedCode == null) {
+            this.preparedCode = new ArrayList<>();
+        }
+        this.preparedCode.addAll(this.prepare(new ArrayList<>(Collections.singletonList(classPath))));
     }
 
     /**

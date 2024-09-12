@@ -1,6 +1,7 @@
 package org.restudios.relang.parser.ast.types.values;
 
 import org.restudios.relang.modules.Module;
+import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.Visibility;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.nodes.expressions.CastExpression;

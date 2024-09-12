@@ -56,13 +56,13 @@ public class BinaryExpression extends Statement {
                     return fm2.getReturnType();
                 }
             }
-        }else if(l.isCustomType()){
+        }else if(l.isCustomType() && l.primitive != Primitives.TYPE){
             RLClass li = l.clazz;
             FunctionMethod fm = li.findBinaryOperator(operator, Type.clazz(li), r);
             if(fm != null){
                 return fm.getReturnType();
             }
-        }else if(r.isCustomType()){
+        }else if(r.isCustomType() && r.primitive != Primitives.TYPE){
             RLClass ri = r.clazz;
             FunctionMethod fm = ri.getRLClass().findBinaryOperator(operator, l, Type.clazz(ri));
             if(fm != null){

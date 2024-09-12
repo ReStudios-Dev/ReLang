@@ -35,12 +35,12 @@ public class MemberStatement extends Statement  {
 
     @Override
     public Type predictType(AnalyzerContext c) {
-        Type l = left.predictType(c);
-        l.initClassOrType(c);
-        if(l.primitive == Primitives.NULL || l.primitive == Primitives.VOID){
+        Type leftType = left.predictType(c);
+        leftType.initClassOrType(c);
+        if(leftType.primitive == Primitives.NULL || leftType.primitive == Primitives.VOID){
             throw new AnalyzerError("null value", left.token);
         }
-        if(!l.isCustomType()){
+        if(!leftType.isCustomType()){
             throw new AnalyzerError("Cannot access non class", left.token);
         }
         if(right instanceof MethodCallStatement) {
@@ -50,14 +50,21 @@ public class MemberStatement extends Statement  {
             for (Expression argument : arguments) {
                 types.add(argument.predictType(c));
             }
-            Type t = ClassInstance.findMethodFromNameAndArguments(mcs.method.token.string, types, l.clazz.getAllMethodsOriginal(true, false, true), l, c);
+            Type t = null;
+
+            t = ClassInstance.findMethodFromNameAndArguments(mcs.method.token.string, types, leftType, leftType, c, false);
+
+            if(t != null && t.isSubType()){
+                t = t.getSubTypeValue(leftType);
+            }
+
             if(t != null) return t;
             throw new AnalyzerError("Method "+mcs.method.token.string+" not found", mcs.method.token);
         }
         IdentifierExpression variable = (IdentifierExpression) right;
-        for (UnInitializedVariable clazzVariable : l.clazz.getVariables()) {
+        for (UnInitializedVariable clazzVariable : leftType.clazz.getAllVariables(true)) {
             boolean staticVariable = clazzVariable.getVisibilities().contains(Visibility.STATIC);
-            boolean staticCall = !l.isInstance();
+            boolean staticCall = !leftType.isInstance();
             if(staticVariable != staticCall){
                 continue;
             }
@@ -65,7 +72,7 @@ public class MemberStatement extends Statement  {
                 return clazzVariable.getType();
             }
         }
-        for (RLClass subClass : l.clazz.getSubClasses()) {
+        for (RLClass subClass : leftType.clazz.getSubClasses()) {
             if(variable.value.equals(subClass.getName())){
                 return subClass.type();
             }

@@ -1,6 +1,7 @@
 package org.restudios.relang.parser.ast.types.nodes.expressions.implicit;
 
 import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
 import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.UnaryImplicitOperationType;
 import org.restudios.relang.parser.ast.types.nodes.Expression;
@@ -31,8 +32,10 @@ public class UnaryImplicitExpression extends ImplicitExpression {
         Type t = expression.predictType(c);
         if(t.isArray()){
             return t.subTypes.get(0);
+        }else{
+            throw new AnalyzerError("Can't unary get item of non array", expression.token);
         }
-        return Primitives.NULL.type();
+        //return Primitives.NULL.type();
     }
 
     @Override

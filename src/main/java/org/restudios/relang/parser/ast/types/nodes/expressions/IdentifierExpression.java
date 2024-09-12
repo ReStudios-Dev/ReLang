@@ -57,7 +57,7 @@ public class IdentifierExpression extends Expression {
             }
             for (CustomTypeValue subType : context.getHandlingClass().getSubTypes()) {
                 if(subType.name.equals(value)){
-                    return new TypeValue(subType.name, subType.value).type();
+                    return new TypeValue(subType.name, subType.value, context.getHandlingClass()).type();
                 }
             }
         }
@@ -75,7 +75,7 @@ public class IdentifierExpression extends Expression {
         if(ci != null){
             for (CustomTypeValue subType : ci.getSubTypes()) {
                 if(subType.name.equals(value)){
-                    return new TypeValue(subType.name, subType.value);
+                    return new TypeValue(subType.name, subType.value, ci.getRLClass());
                 }
             }
         }

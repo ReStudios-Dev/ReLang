@@ -1,5 +1,6 @@
 package org.restudios.relang.parser.ast.types.values.values;
 
+import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 
 import java.util.*;

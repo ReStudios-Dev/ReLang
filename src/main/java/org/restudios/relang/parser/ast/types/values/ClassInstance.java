@@ -1,6 +1,7 @@
 package org.restudios.relang.parser.ast.types.values;
 
 import org.restudios.relang.parser.analyzer.AnalyzerContext;
+import org.restudios.relang.parser.analyzer.AnalyzerError;
 import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.Visibility;
 import org.restudios.relang.parser.ast.types.nodes.Type;
@@ -8,8 +9,6 @@ import org.restudios.relang.parser.ast.types.values.values.*;
 import org.restudios.relang.parser.ast.types.values.values.sll.classes.RLRunnable;
 import org.restudios.relang.parser.ast.types.values.values.sll.dynamic.DynamicSLLClass;
 import org.restudios.relang.parser.exceptions.RLException;
-import org.restudios.relang.parser.utils.NativeMethod;
-import org.restudios.relang.parser.utils.NativeMethodBuilder;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -174,6 +173,7 @@ public class ClassInstance implements Instance {
                         boolean mustBeVarArg = varArg && i >= from;
                         Type in = types.get(i);
                         Type out = mustBeVarArg ? varArgType : method.getArgumentTypes().get(i);
+                        if(out.isSubType()) continue ;
                         if(instance != null)out.init(instance.context);
                         else out.init(context);
                         if(out.primitive != Primitives.NULL && !in.canBe(out)) {
@@ -186,8 +186,37 @@ public class ClassInstance implements Instance {
         }
         return null;
     }
-    public static Type findMethodFromNameAndArguments(String name, List<Type> types, ArrayList<FunctionMethod> methods, Type inherit, AnalyzerContext context) {
-        lst:for (FunctionMethod method : methods) {
+    public static FunctionMethod findConstructor(List<Type> types, Type clazz, AnalyzerContext context) {
+        if(clazz.clazz.getConstructors().isEmpty() && types.isEmpty())return null;
+        lst:for (FunctionMethod method : clazz.clazz.getConstructors()) {
+            if (method.getArgumentTypes().size() == types.size() || method.getArguments().get(method.getArguments().size() - 1).isVarArg()) {
+                List<Type> argumentTypes = method.getArgumentTypes();
+                boolean varArg = !method.getArguments().isEmpty() && method.getArguments().get(method.getArguments().size() - 1).varArg;
+                Type varArgType = varArg ? argumentTypes.get(argumentTypes.size() - 1) : null;
+                int from = argumentTypes.size() - 1;
+                for (int i = 0; i < types.size(); i++) {
+                    boolean mustBeVarArg = varArg && i >= from;
+                    Type in = types.get(i);
+                    Type out = mustBeVarArg ? varArgType : argumentTypes.get(i);
+                    out.initClassOrType(context);
+                    if(out.primitive == Primitives.TYPE){
+                        out = clazz.getSubType(out.subtype.name);
+                    }
+                    if (out.primitive != Primitives.NULL && !in.canBe(out)) {
+                        continue lst;
+                    }
+                }
+                return method;
+            }
+        }
+        throw new RuntimeException("CCNF");
+    }
+    public static Type findMethodFromNameAndArguments(String name, List<Type> types, Type typeOfCallingClass, Type inherit, AnalyzerContext context, boolean allowStatic) {
+        if(typeOfCallingClass.primitive == Primitives.TYPE){
+            // TODO predict type type ( class<T extends Something> )
+            typeOfCallingClass = context.getClass(DynamicSLLClass.OBJECT).type();
+        }
+        lst:for (FunctionMethod method : typeOfCallingClass.clazz.getAllMethods(true, false, allowStatic)) {
             if(method.name.equals(name)) {
                 if (method.getArgumentTypes().size()==types.size() || method.getArguments().get(method.getArguments().size()-1).isVarArg()) {
                     List<Type> argumentTypes = method.getArgumentTypes();
@@ -196,15 +225,18 @@ public class ClassInstance implements Instance {
                     int from = argumentTypes.size() - 1;
                     for (int i = 0; i < types.size(); i++) {
                         boolean mustBeVarArg = varArg && i >= from;
-                        Type in = types.get(i);
-                        Type out = mustBeVarArg ? varArgType : method.getArgumentTypes().get(i);
-                        if(inherit != null){
-                            out.initClassOrType(context, inherit);
+                        Type providedArgument = types.get(i);
+                        Type methodArgument = mustBeVarArg ? varArgType : argumentTypes.get(i);
+                        if(inherit != null) {
+                            methodArgument.initClassOrType(context, inherit);
                         }else{
-                            out.initClassOrType(context);
+                            methodArgument.initClassOrType(context, typeOfCallingClass);
                         }
-                        in.initClassOrType(context);
-                        if(out.primitive != Primitives.NULL && !in.canBe(out)) {
+                        if(methodArgument.primitive == Primitives.TYPE){
+                            methodArgument = typeOfCallingClass.getSubType(methodArgument.subtype.name);
+                        }
+                        providedArgument.initClassOrType(context);
+                        if(methodArgument.primitive != Primitives.NULL && !providedArgument.canBe(methodArgument)) {
                             continue  lst;
                         }
                     }

@@ -96,7 +96,7 @@ public abstract class ReFunction {
                 r.setReturn(returnType.firstTypeOrVoid());
             }
         }
-        if (!returned.type().canBe(returnType)){
+        if (!returned.type().canBe(returnType) && context.checkTypesRuntime()){
             throw new RLException(this +" returned incorrect type: " + returned.type().displayName(), Type.internal(context), callContext);
 
         }

@@ -33,6 +33,7 @@ public class Context {
     private String currentMethod;
     private ModuleRegistry moduleRegistry;
     private RLClass staticCall;
+    private boolean checkTypesRuntime;
 
     public Context(Context parent){
         this.parent = parent;
@@ -57,6 +58,14 @@ public class Context {
         }
     }
 
+    public boolean isCheckTypesRuntime() {
+        return checkTypesRuntime;
+    }
+
+    public Context setCheckTypesRuntime(boolean checkTypesRuntime) {
+        this.checkTypesRuntime = checkTypesRuntime;
+        return this;
+    }
 
     public ModuleRegistry getModuleRegistry() {
         return moduleRegistry;
@@ -324,5 +333,9 @@ public class Context {
 
     public RLClass getStaticCall() {
         return staticCall;
+    }
+
+    public boolean checkTypesRuntime() {
+        return this.checkTypesRuntime;
     }
 }

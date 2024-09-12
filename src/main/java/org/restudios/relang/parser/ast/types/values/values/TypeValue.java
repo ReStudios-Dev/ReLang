@@ -2,21 +2,26 @@ package org.restudios.relang.parser.ast.types.values.values;
 
 import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.nodes.Type;
+import org.restudios.relang.parser.ast.types.nodes.TypeSubType;
 import org.restudios.relang.parser.ast.types.values.RLClass;
 
 public class TypeValue implements Value {
 
     public final Type value;
     public final String name;
+    public final RLClass ofClazz;
 
-    public TypeValue(String name, Type value) {
+    public TypeValue(String name, Type value, RLClass ofClazz) {
         this.value = value;
         this.name = name;
+        this.ofClazz = ofClazz;
     }
 
     @Override
     public Type type() {
-        return new Type(null, Primitives.TYPE);
+        Type t = new Type(null, Primitives.TYPE);
+        t.subtype = new TypeSubType(this.name, this.ofClazz);
+        return t;
     }
 
     @Override
