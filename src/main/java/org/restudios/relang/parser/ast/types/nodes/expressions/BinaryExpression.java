@@ -19,6 +19,10 @@ import org.restudios.relang.parser.ast.types.values.values.sll.dynamic.DynamicSL
 import org.restudios.relang.parser.exceptions.RLException;
 import org.restudios.relang.parser.tokens.Token;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 @SuppressWarnings("DuplicatedCode")
 public class BinaryExpression extends Statement {
     public final Expression left;
@@ -73,6 +77,7 @@ public class BinaryExpression extends Statement {
             if(l.isString()) return l.clazz.type();
             if(r.isString()) return r.clazz.type();
         }
+        List<Primitives> compatible = new ArrayList<>(Arrays.asList(Primitives.FLOAT, Primitives.INTEGER, Primitives.CHAR));
         switch (operator) {
             case "+":
             case "-":
@@ -86,11 +91,14 @@ public class BinaryExpression extends Statement {
             case "**":
             case "/":
             case "*":
-                if(l.primitive == Primitives.INTEGER) {
-                    if(r.primitive == Primitives.FLOAT || r.primitive == Primitives.INTEGER) return r.primitive.type();
-                }
-                if(l.primitive == Primitives.FLOAT) {
-                    if(r.primitive == Primitives.FLOAT || r.primitive == Primitives.INTEGER) return Primitives.FLOAT.type();
+                for (Primitives primitives : compatible) {
+                    if(l.primitive == primitives){
+                        for (Primitives primitives1 : compatible) {
+                            if(r.primitive == primitives1){
+                                return r.primitive.type();
+                            }
+                        }
+                    }
                 }
                 throw new AnalyzerError("Invalid binary operation", token);
         }

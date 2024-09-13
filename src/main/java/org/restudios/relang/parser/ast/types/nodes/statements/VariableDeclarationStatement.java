@@ -38,11 +38,14 @@ public class VariableDeclarationStatement extends Statement {
 
     @Override
     public void analyze(AnalyzerContext context) {
+        if(context.getVariable(variable) != null) throw new AnalyzerError("Variable "+variable+" already declared.", token);
         context.putVariable(variable, type);
         type.initClassOrType(context);
         if (value != null){
+            Type bef = context.setShouldBe(type);
             Type t = value.predictType(context);
-            if(!t.canBe(type, true)){
+            context.setShouldBe(bef);
+            if(!t.canBe(type, true, context)){
                 throw new AnalyzerError("Invalid assigment value ("+type+" = "+t+")", value.token);
             }
         }

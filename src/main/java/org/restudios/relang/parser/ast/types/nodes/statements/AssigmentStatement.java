@@ -35,10 +35,12 @@ public class AssigmentStatement extends Statement {
     @Override
     public void analyze(AnalyzerContext context) {
         Type variable = key.predictType(context);
-        Type assign = value.predictType(context);
         variable.initClassOrType(context);
+        Type t = context.setShouldBe(variable);
+        Type assign = value.predictType(context);
         assign.initClassOrType(context);
-        if(!assign.canBe(variable, true)) throw new AnalyzerError("Invalid assigment type ("+variable+" = "+assign+")", value.token);
+        context.setShouldBe(t);
+        if(!assign.canBe(variable, true, context)) throw new AnalyzerError("Invalid assigment type ("+variable+" = "+assign+")", value.token);
     }
 
     @Override

@@ -19,6 +19,7 @@ public class AnalyzerContext {
     public List<RLClass> classes = new ArrayList<>();
     public RLClass handlingClass;
     private Type mustReturn;
+    private Type shouldBe;
 
     public AnalyzerContext(AnalyzerContext parent, Context root) {
         this.parent = parent;
@@ -80,7 +81,9 @@ public class AnalyzerContext {
                 for (int i = 0; i < method.arguments.size(); i++) {
                     Type needed = method.arguments.get(i).type;
                     Type provided = params.get(i);
-                    if(!provided.canBe(needed)){
+                    needed.initClassOrType(this);
+                    provided.initClassOrType(this);
+                    if(!provided.canBe(needed, false, this)){
                         continue gen;
                     }
                 }
@@ -120,4 +123,14 @@ public class AnalyzerContext {
     public List<MethodDeclarationStatement> getMethods() {
         return methods;
     }
+
+    public Type setShouldBe(Type shouldBe) {
+        Type before = this.shouldBe;
+        this.shouldBe = shouldBe;
+        return before;
+    }
+    public Type getShouldBe(){
+        return this.shouldBe;
+    }
+
 }

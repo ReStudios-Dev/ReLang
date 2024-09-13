@@ -91,6 +91,7 @@ public class ClassInstance implements Instance {
         Type t = clazz.type().clone();
         t.subTypes.clear();
         t.subTypes.addAll(subTypes.stream().map(customTypeValue -> customTypeValue.value).collect(Collectors.toList()));
+        t.setInstance(true);
         return t;
     }
 

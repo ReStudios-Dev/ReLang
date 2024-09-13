@@ -6,9 +6,12 @@ import org.restudios.relang.parser.ast.types.Node;
 import org.restudios.relang.parser.ast.types.Primitives;
 import org.restudios.relang.parser.ast.types.nodes.expressions.CastExpression;
 import org.restudios.relang.parser.ast.types.nodes.expressions.IdentifierExpression;
+import org.restudios.relang.parser.ast.types.nodes.expressions.LambdaExpression;
+import org.restudios.relang.parser.ast.types.nodes.statements.VariableDeclarationStatement;
 import org.restudios.relang.parser.ast.types.values.*;
 import org.restudios.relang.parser.ast.types.values.values.*;
 import org.restudios.relang.parser.ast.types.values.values.sll.classes.RLArray;
+import org.restudios.relang.parser.ast.types.values.values.sll.classes.RLRunnable;
 import org.restudios.relang.parser.ast.types.values.values.sll.dynamic.DynamicSLLClass;
 import org.restudios.relang.parser.exceptions.RLException;
 import org.restudios.relang.parser.tokens.Token;
@@ -26,6 +29,7 @@ public class Type extends Node {
     public Primitives primitive;
     public final List<Type> subTypes;
     public TypeSubType subtype;
+    public LambdaExpression lambda;
     private boolean isInstance;
     private Type(Token token, ArrayList<Type> subTypes) {
         super(token);
@@ -120,13 +124,13 @@ public class Type extends Node {
     }
 
     public boolean hardCanBe(Type type){
-        if(canBe(type, true)) return true;
+        if(canBe(type, true, null)) return true;
         return clazz != null && clazz.getName().equals(DynamicSLLClass.OBJECT);
     }
     public boolean canBe(Type type){
-        return canBe(type, false);
+        return canBe(type, false, null);
     }
-    public boolean canBe(Type type, boolean checkOverloads){
+    public boolean canBe(Type type, boolean checkOverloads, AnalyzerContext context){
         if(type.clazz != null && type.clazz.getName().equals(DynamicSLLClass.OBJECT)) return true;
 
         if(type.subtype != null && subtype != null && subtype.compare(type.subtype)) return true;
@@ -136,10 +140,13 @@ public class Type extends Node {
             if(type.clazz != null){
                 if(type.clazz.isInterface()){
                     if(type.clazz.getAbstractMethods().size() == 1){
-
+                        if(lambda != null){
+                            FunctionMethod fm = lambda.isCompatible(type.clazz, context);
+                            return fm != null;
+                        }
                         //FunctionMethod fm = type.clazz.getAbstractMethods().get(0);
                         // TODO 06.09.2024 14:34 Check lambda
-                        return true;
+                        return false;
 
                     }
                 }

@@ -10,10 +10,13 @@ import org.restudios.relang.parser.ast.types.nodes.extra.AnnotationDefinition;
 import org.restudios.relang.parser.ast.types.nodes.extra.LoadedAnnotation;
 import org.restudios.relang.parser.ast.types.values.Context;
 import org.restudios.relang.parser.ast.types.values.FunctionMethod;
+import org.restudios.relang.parser.ast.types.values.RLClass;
 import org.restudios.relang.parser.ast.types.values.values.FunctionArgument;
+import org.restudios.relang.parser.ast.types.values.values.sll.dynamic.DynamicSLLClass;
 import org.restudios.relang.parser.tokens.Token;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,6 +36,12 @@ public class MethodDeclarationStatement extends DeclarationStatement {
             AnalyzerContext nc = context.create();
             for (VariableDeclarationStatement argument : arguments) {
                 argument.type.initClassOrType(context);
+                if(argument.varArgs){
+                    Type array = context.getClass(DynamicSLLClass.ARRAY).type();
+                    array.applySubTypes(new ArrayList<>(Collections.singletonList(argument.type)));
+                    nc.putVariable(argument.variable, array);
+                    continue;
+                }
                 nc.putVariable(argument.variable, argument.type);
             }
 

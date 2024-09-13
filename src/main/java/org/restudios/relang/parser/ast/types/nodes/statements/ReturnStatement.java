@@ -26,10 +26,12 @@ public class ReturnStatement extends Statement {
         }
         Type mustReturn = context.getMustReturn();
         mustReturn.initClassOrType(context);
+        Type before = context.setShouldBe(mustReturn);
         Type returned = expression == null ? Primitives.VOID.type() : expression.predictType(context);
         returned.initClassOrType(context);
+        context.setShouldBe(before);
         if(returned.primitive == Primitives.VOID || returned.primitive == Primitives.NULL) return;
-        if(!returned.canBe(mustReturn, true)){
+        if(!returned.canBe(mustReturn, true, context)){
             throw new AnalyzerError("The return type must be "+mustReturn, expression == null ? token : expression.token);
         }
     }
