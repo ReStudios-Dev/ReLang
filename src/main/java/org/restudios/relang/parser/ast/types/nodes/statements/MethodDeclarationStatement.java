@@ -51,11 +51,11 @@ public class MethodDeclarationStatement extends DeclarationStatement {
 
             context.setMustReturn(before);
 
-            if(returning != null) returning.initClassOrType(context);
-            if(returning != null && returning.primitive != Primitives.VOID && returning.primitive != Primitives.NULL){
-                if(!code.hasReturnStatement()){
-                    throw new AnalyzerError("The method must return "+returning, token);
-                }
+        }
+        if(returning != null) returning.initClassOrType(context);
+        if(returning != null && returning.primitive != Primitives.VOID && returning.primitive != Primitives.NULL){
+            if(!isNative) if(code == null || !code.hasReturnStatement()){
+                throw new AnalyzerError("The method must return "+returning, token);
             }
         }
         context.putMethod(this);

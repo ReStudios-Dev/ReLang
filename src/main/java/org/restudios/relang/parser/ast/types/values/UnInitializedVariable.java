@@ -55,10 +55,7 @@ public class UnInitializedVariable {
         type.init(context);
         type.initClassOrType(context);
         ClassInstance classInstance = context.getClass(DynamicSLLClass.REFL_CLASSVARIABLE).instantiate(context, Collections.emptyList());
-        classInstance.getContext().getVariable("visibility").setValueForce(Visibility.getReflectionVisibility(this.visibilities, context));
-        classInstance.getContext().getVariable("type").setValueForce(type.getReflectionClass(context));
-
-        classInstance.getContext().getVariable("name").setValueForce(new RLStr(this.name, context));
+        classInstance.getCache().put("refl::var", this);
         return classInstance;
     }
 }

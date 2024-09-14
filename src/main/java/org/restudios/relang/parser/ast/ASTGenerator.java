@@ -354,6 +354,9 @@ public class ASTGenerator {
 
     private ClassBlock parseBaseClassBlock() {
         ArrayList<Statement> statements = new ArrayList<>();
+        if(match(TokenType.SEMICOLON)){
+            return asClassBlock(statements);
+        }
         consume(TokenType.OPEN_BRACE, "Expected {");
         while (!match(TokenType.CLOSE_BRACE)) {
             Statement dec = parseClassInsideDeclaration();

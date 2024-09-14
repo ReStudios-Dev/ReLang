@@ -1,26 +1,25 @@
 public native abstract class ClassMethod {
-    public readonly str name;
-    public readonly ObjectVisibility visibility;
-    public readonly bool isStatic;
-    public readonly bool isFinal;
 
-    //public Type getReturnType() {} // todo
-    //public array<Type> getArguments() {} // todo
+    native public Type getReturnType();
+    native public array<Type> getArguments();
+    native public ObjectVisibility getVisibility();
+    native public bool isFinal();
+    native public bool isStatic();
+    native public str getName();
 
     public str getHumanReadably(){
-        str result;
-        result += this.visibility.name().lower();
-        if(this.isFinal){
-            result += " final";
+        array<str> parts = [this.getVisibility().name().lower()];
+        if(this.isFinal()){
+            parts.add("final");
         }
-        if(this.isStatic){
-            result += " static";
+        if(this.isStatic()){
+            parts.add("static");
         }
-        //result += this.returnType;
-        result += this.name;
-        result += "(";
-        //result += this.arguments.join(", ");
-        result += ")";
-        return result;
+        parts.add((str) this.getReturnType());
+        parts.add(this.getName() + "(" + this.getArguments().join(", ") + ")");
+        return parts.join(" ");
+    }
+    explicit operator str(ClassMethod var){
+        return var.getHumanReadably();
     }
 }

@@ -155,10 +155,12 @@ public class FunctionMethod extends RLMethod {
     public Value getReflectionClass(Context context){
         SLLClassInstance classInstance = (SLLClassInstance) context.getClass(DynamicSLLClass.REFL_CLASSMETHOD).instantiate(context, new ArrayList<>());
 
-        classInstance.getContext().getVariable("name").setValueForce(new RLStr(this.name, context));
+        /*classInstance.getContext().getVariable("name").setValueForce(new RLStr(this.name, context));
         classInstance.getContext().getVariable("visibility").setValueForce(Visibility.getReflectionVisibility(this.visibility, context));
         classInstance.getContext().getVariable("isStatic").setValueForce(Value.value(this.visibility.contains(Visibility.STATIC)));
-        classInstance.getContext().getVariable("isFinal").setValueForce(Value.value(this.visibility.contains(Visibility.FINAL)));
+        classInstance.getContext().getVariable("isFinal").setValueForce(Value.value(this.visibility.contains(Visibility.FINAL)));*/
+
+        classInstance.getCache().put("refl::method", this);
         return classInstance;
     }
     @SuppressWarnings("unused")

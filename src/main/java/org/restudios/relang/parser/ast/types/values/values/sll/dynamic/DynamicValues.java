@@ -1,11 +1,9 @@
 package org.restudios.relang.parser.ast.types.values.values.sll.dynamic;
 
+import org.restudios.relang.parser.ast.types.Visibility;
 import org.restudios.relang.parser.ast.types.nodes.Type;
 import org.restudios.relang.parser.ast.types.nodes.expressions.CastExpression;
-import org.restudios.relang.parser.ast.types.values.ClassInstance;
-import org.restudios.relang.parser.ast.types.values.EnumClassInstance;
-import org.restudios.relang.parser.ast.types.values.RLEnumClass;
-import org.restudios.relang.parser.ast.types.values.Variable;
+import org.restudios.relang.parser.ast.types.values.*;
 import org.restudios.relang.parser.ast.types.values.values.NullValue;
 import org.restudios.relang.parser.ast.types.values.values.Value;
 import org.restudios.relang.parser.ast.types.values.values.sll.SLLMethod;
@@ -26,7 +24,7 @@ import java.util.Objects;
 public class DynamicValues {
 
 
-    public static final ArrayList<String> sllClasses = new ArrayList<>(Arrays.asList(DynamicSLLClass.OBJECT, DynamicSLLClass.ENUM, DynamicSLLClass.STRING, DynamicSLLClass.ARRAY, DynamicSLLClass.CAST, DynamicSLLClass.RUNNABLE, DynamicSLLClass.THREAD, DynamicSLLClass.REFL_CLASSVARIABLE, DynamicSLLClass.REFL_CLASSMETHOD));
+    public static final ArrayList<String> sllClasses = new ArrayList<>(Arrays.asList(DynamicSLLClass.OBJECT, DynamicSLLClass.ENUM, DynamicSLLClass.STRING, DynamicSLLClass.ARRAY, DynamicSLLClass.CAST, DynamicSLLClass.RUNNABLE, DynamicSLLClass.THREAD, DynamicSLLClass.REFL_CLASSVARIABLE, DynamicSLLClass.REFL_TYPE, DynamicSLLClass.REFL_CLASSMETHOD, DynamicSLLClass.REFL_CLASS));
 
     public static ArrayList<SLLMethod> Runnable(DynamicSLLClass ci){
         ArrayList<SLLMethod> methods = new ArrayList<>();
@@ -143,6 +141,22 @@ public class DynamicValues {
         methods.add(new NativeMethodBuilder(ci, "getClass")
                 .setHandler((arguments, context, callContext,instance) -> {
                     return instance.getRLClass().getReflectionClass(context);
+                })
+                .buildSLL(ci));
+        return methods;
+    }
+    public static ArrayList<SLLMethod> REFL_Class(DynamicSLLClass ci){
+        ArrayList<SLLMethod> methods = new ArrayList<>();
+        methods.add(new NativeMethodBuilder(ci, "getVariables")
+                .setHandler((arguments, context, callContext,instance) -> {
+                    RLClass refl = (RLClass) instance.getCache().get("refl::class");
+                    return refl.getReflectionVariables(context);
+                })
+                .buildSLL(ci));
+        methods.add(new NativeMethodBuilder(ci, "getMethods")
+                .setHandler((arguments, context, callContext,instance) -> {
+                    RLClass refl = (RLClass) instance.getCache().get("refl::class");
+                    return refl.getReflectionMethods(context);
                 })
                 .buildSLL(ci));
         return methods;
@@ -368,9 +382,12 @@ public class DynamicValues {
                 .objectArgument("object")
                 .objectArgument("value")
                 .setHandler((arguments, context, callContext,instance) -> {
-                    String varname = instance.getVariable("name").finalExpression().stringValue();
+                    UnInitializedVariable variable = (UnInitializedVariable) instance.getCache().get("refl::var");
+
+                    String varname = variable.getName();
                     ClassInstance obj = arguments.getClassInstance("object");
                     Variable v = obj.getVariable(varname);
+
                     v.setValueForce(CastExpression.cast(v.getType(), arguments.getVariable("value").finalExpression(), context));
                 })
                 .buildSLL(ci));
@@ -378,7 +395,8 @@ public class DynamicValues {
                 .objectArgument("object")
                 .objectArgument("value")
                 .setHandler((arguments, context, callContext,instance) -> {
-                    String varname = instance.getVariable("name").finalExpression().stringValue();
+                    UnInitializedVariable variable = (UnInitializedVariable) instance.getCache().get("refl::var");
+                    String varname = variable.getName();
                     ClassInstance obj = arguments.getClassInstance("object");
                     Variable v = obj.getVariable(varname);
                     v.setValue(CastExpression.cast(v.getType(), arguments.getVariable("value").finalExpression(), context), context);
@@ -387,9 +405,28 @@ public class DynamicValues {
         methods.add(new NativeMethodBuilder(ci, "getValue")
                 .objectArgument("object")
                 .setHandler((arguments, context, callContext,instance) -> {
-                    String varname = instance.getVariable("name").finalExpression().stringValue();
+                    UnInitializedVariable variable = (UnInitializedVariable) instance.getCache().get("refl::var");
+                    String varname = variable.getName();
                     ClassInstance obj = arguments.getClassInstance("object");
                     return obj.getVariable(varname).getValue().finalExpression();
+                })
+                .buildSLL(ci));
+        methods.add(new NativeMethodBuilder(ci, "getVisibility")
+                .setHandler((arguments, context, callContext,instance) -> {
+                    UnInitializedVariable variable = (UnInitializedVariable) instance.getCache().get("refl::var");
+                    return Visibility.getReflectionVisibility(variable.getVisibilities(), context);
+                })
+                .buildSLL(ci));
+        methods.add(new NativeMethodBuilder(ci, "getType")
+                .setHandler((arguments, context, callContext, instance) -> {
+                    UnInitializedVariable variable = (UnInitializedVariable) instance.getCache().get("refl::var");
+                    return variable.getType().getReflectionClass(context);
+                })
+                .buildSLL(ci));
+        methods.add(new NativeMethodBuilder(ci, "getName")
+                .setStrHandler((arguments, context, callContext, instance) -> {
+                    UnInitializedVariable variable = (UnInitializedVariable) instance.getCache().get("refl::var");
+                    return variable.getName();
                 })
                 .buildSLL(ci));
 
@@ -398,6 +435,44 @@ public class DynamicValues {
     }
     public static ArrayList<SLLMethod> ClassMethod(DynamicSLLClass ci) {
         ArrayList<SLLMethod> methods = new ArrayList<>();
+
+        methods.add(new NativeMethodBuilder(ci, "getReturnType")
+                .setHandler((arguments, context, callContext, instance) -> {
+                    FunctionMethod fm = (FunctionMethod) instance.getCache().get("refl::method");
+                    return fm.getReturnType().getReflectionClass(context);
+                })
+                .buildSLL(ci));
+        methods.add(new NativeMethodBuilder(ci, "getArguments")
+                .setHandler((arguments, context, callContext, instance) -> {
+                    FunctionMethod fm = (FunctionMethod) instance.getCache().get("refl::method");
+                    return fm.getReflectionArguments(context);
+                })
+                .buildSLL(ci));
+        methods.add(new NativeMethodBuilder(ci, "getVisibility")
+                .setHandler((arguments, context, callContext, instance) -> {
+                    FunctionMethod fm = (FunctionMethod) instance.getCache().get("refl::method");
+                    return Visibility.getReflectionVisibility(fm.visibility, context);
+                })
+                .buildSLL(ci));
+        methods.add(new NativeMethodBuilder(ci, "isFinal")
+                .setBoolHandler((arguments, context, callContext, instance) -> {
+                    FunctionMethod fm = (FunctionMethod) instance.getCache().get("refl::method");
+                    return fm.visibility.contains(Visibility.FINAL);
+                })
+                .buildSLL(ci));
+        methods.add(new NativeMethodBuilder(ci, "isStatic")
+                .setBoolHandler((arguments, context, callContext, instance) -> {
+                    FunctionMethod fm = (FunctionMethod) instance.getCache().get("refl::method");
+                    return fm.visibility.contains(Visibility.STATIC);
+                })
+                .buildSLL(ci));
+        methods.add(new NativeMethodBuilder(ci, "getName")
+                .setStrHandler((arguments, context, callContext, instance) -> {
+                    FunctionMethod fm = (FunctionMethod) instance.getCache().get("refl::method");
+                    return fm.name;
+                })
+                .buildSLL(ci));
+
         /*methods.add(new SLLMethod(
                 "getReturnType", false,
                 (arguments, context, callContext, clazz) -> {
@@ -410,6 +485,38 @@ public class DynamicValues {
                     return new NullValue(); // todo
                 }
         , ci, ci.getCreatedContext()));*/
+
+
+
+        return methods;
+
+    }
+    public static ArrayList<SLLMethod> REFL_Type(DynamicSLLClass ci) {
+        ArrayList<SLLMethod> methods = new ArrayList<>();
+        methods.add(new NativeMethodBuilder(ci, "getSubTypes")
+                .setHandler((arguments, context, callContext, instance) -> {
+                    return ((Type)instance.getCache().get("refl::type")).getReflectionSubTypes(context);
+                })
+                .buildSLL(ci));
+        methods.add(new NativeMethodBuilder(ci, "isPrimitive")
+                .setBoolHandler((arguments, context, callContext, instance) -> {
+                    return ((Type)instance.getCache().get("refl::type")).clazz == null;
+                })
+                .buildSLL(ci));
+        methods.add(new NativeMethodBuilder(ci, "getTypeClass")
+                .setHandler((arguments, context, callContext, instance) -> {
+                    Type type = (Type)instance.getCache().get("refl::type");
+                    if(type.clazz == null) return Value.nullValue();
+                    return type.clazz.getReflectionClass(context);
+                })
+                .buildSLL(ci));
+        methods.add(new NativeMethodBuilder(ci, "getPrimitiveType")
+                .setHandler((arguments, context, callContext, instance) -> {
+                    Type type = (Type)instance.getCache().get("refl::type");
+                    if(type.primitive == null) return Value.nullValue();
+                    return type.primitive.getReflectionClass(context);
+                })
+                .buildSLL(ci));
 
 
 
@@ -434,10 +541,14 @@ public class DynamicValues {
                 return ClassVariable(ci);
             case DynamicSLLClass.REFL_CLASSMETHOD:
                 return ClassMethod(ci);
+            case DynamicSLLClass.REFL_TYPE:
+                return REFL_Type(ci);
             case DynamicSLLClass.RUNNABLE:
                 return Runnable(ci);
             case DynamicSLLClass.THREAD:
                 return Thread(ci);
+            case DynamicSLLClass.REFL_CLASS:
+                return REFL_Class(ci);
         }
         return new ArrayList<>();
     }

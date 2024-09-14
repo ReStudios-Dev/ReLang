@@ -369,25 +369,16 @@ public class Type extends Node {
         init(context);
         initClassOrType(context);
         ClassInstance ci = context.getClass(DynamicSLLClass.REFL_TYPE).instantiate(context, new ArrayList<>());
-        if(this.clazz != null){
-            ci.getContext().getVariable("clazz").setValueForce(this.clazz.getReflectionClass(context));
-            ci.getContext().getVariable("primitive").setValueForce(new NullValue());
-        }else{
-            ci.getContext().getVariable("clazz").setValueForce(new NullValue());
-            try {
-                ci.getContext().getVariable("primitive").setValueForce(primitive.getReflectionClass(context));
-            } catch (Exception e) {
-                ci.getContext().getVariable("primitive").setValueForce(Primitives.NULL.getReflectionClass(context));
-
-            }
-        }
+        ci.getCache().put("refl::type", this);
+        return ci;
+    }
+    public Value getReflectionSubTypes(Context context){
         RLArray arr = new RLArray(Type.clazz(DynamicSLLClass.REFL_TYPE, context), context);
         List<Value> subtypes = this.subTypes.stream().map(t -> t.getReflectionClass(context)).collect(Collectors.toList());
         for (Value subtype : subtypes) {
             arr.add(subtype);
         }
-        ci.getContext().getVariable("subtypes").setValueForce(arr);
-        return ci;
+        return arr;
     }
 
     public boolean tokenEquality(Type returnType) {

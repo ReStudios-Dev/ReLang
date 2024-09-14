@@ -241,7 +241,9 @@ public class ClassInstance implements Instance {
                             continue  lst;
                         }
                     }
-                    return method.getReturnType();
+                    Type t = method.getReturnType();
+                    t.initClassOrType(context);
+                    return t;
                 }
             }
         }

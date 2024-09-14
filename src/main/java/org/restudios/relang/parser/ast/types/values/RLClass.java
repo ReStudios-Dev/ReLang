@@ -610,8 +610,7 @@ public class RLClass implements Instantiable<ClassInstance>, Value {
         classInstance.getContext().getVariable("name").setValueForce(new RLStr(this.name, context));
         classInstance.getContext().getVariable("visibility").setValueForce(Visibility.getReflectionVisibility(this.visibility, context));
         classInstance.getContext().getVariable("type").setValueForce(getReflectionType(context));
-        classInstance.getContext().getVariable("variables").setValueForce(getReflectionVariables(context));
-        classInstance.getContext().getVariable("methods").setValueForce(getReflectionMethods(context));
+        classInstance.getCache().put("refl::class", this);
         return classInstance;
     }
     public Value getReflectionMethods(Context context){
